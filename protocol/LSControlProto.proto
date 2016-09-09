@@ -1,0 +1,98 @@
+package LSControlProto;
+
+enum Opcode{
+	PKG_NONE = 0;
+	PKG_CtrlVerifyReq = 1;
+	PKG_CtrlVerifyAck = 2;
+	PKG_RegistAccountReq = 3;
+	PKG_RegistAccountAck = 4;
+	PKG_RemoveAccountReq = 5;
+	PKG_RemoveAccountAck = 6;
+	PKG_RegistAccountWithInfoReq = 7;
+	PKG_RegistAccountWithInfoAck = 8;
+	PKG_HeartBeat = 9;
+	PKG_ModifyPasswordReq = 10;
+	PKG_ModifyPasswordRsp = 11;
+	PKG_InsertDonateRecordReq = 12;
+	PKG_InsertDonateRecordRsp = 13;
+	PKG_InsertSystemGiftReq = 14;
+	PKG_InsertSystemGiftRsp = 15;
+}
+
+message LSCHead{
+	required uint32 opcode = 1;
+}
+
+message LSCCtrlVerifyReq{
+	required string verifycode = 1;
+}
+
+message LSCCtrlVerifyAck{
+	required bool result = 1;
+}
+
+message LSCRegistAccountReq{
+	required string account  = 1;
+	required string password  = 2;
+}
+
+message LSCRegistAccountAck{
+	required bool result  = 1;
+}
+
+message LSCRemoveAccountReq{
+	required string name = 1;
+}
+
+message LSCRemoveAccountAck{
+	required bool result = 1;
+}
+
+message RSRegistAccountReq{
+	required string account = 1;
+	required string password = 2;
+	required string mail = 3;
+}
+
+message RSRegistAccountAck {
+	required bool result = 1;
+	required string mail = 2;
+	required string account = 3;
+}
+
+message RSHeartBeat {
+	required uint32 seq = 1;
+}
+
+message RSModifyPasswordReq {
+	required string account = 1;
+	required string password = 2;
+}
+
+message RSModifyPasswordRsp {
+	required bool result = 1;
+	required string account = 2;
+}
+
+message RSInsertDonateInfoReq {
+	required string name = 1;
+	required int32 donate = 2;
+	required string donateorderid = 3;
+}
+
+message RSInsertDonateInfoRsp {
+	required string name = 1;
+	required int32 result = 2;
+}
+
+message RSInsertSystemGiftReq {
+	required string account = 1;
+	required int32 giftid = 2;
+	required int32 giftsum = 3;
+	required int32 expiretime = 4;
+}
+
+message RSInsertSystemGiftRsp {
+	required string account = 1;
+	required int32 result = 2;
+}

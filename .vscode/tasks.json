@@ -1,0 +1,59 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "0.1.0",
+    "echoCommand": true,
+    "isShellCommand": true,
+    "showOutput": "always",
+    "windows": {
+        "command": "cmd",
+        "args": [
+            "/C"
+        ]
+    },
+    "tasks": [
+        {
+            "taskName": "vscgo_build",
+            "isBuildCommand": true,
+            "args": [
+                "${workspaceRoot}",
+                "${fileDirname}"
+            ],
+            "isWatching": false,
+            "problemMatcher": {
+                "owner": "go",
+                "fileLocation": [
+                    "relative",
+                    "${fileDirname}"
+                ],
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):\\s+(.*)$",
+                    "file":1,
+                    "line": 2,
+                    "message": 3
+                }
+            }
+        },
+        {
+            "taskName": "vscgo_install",
+            "args": [
+                "${workspaceRoot}",
+                "${fileDirname}"
+            ],
+            "isWatching": false,
+            "problemMatcher": {
+                "owner": "go",
+                "fileLocation": [
+                    "relative",
+                    "${fileDirname}"
+                ],
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):\\s+(.*)$",
+                    "file":1,
+                    "line": 2,
+                    "message": 3
+                }
+            }
+        }
+    ]
+}
