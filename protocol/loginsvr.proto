@@ -1,0 +1,98 @@
+package protocol;
+
+enum LSOp {
+	//	S<->S
+	RegisterServerReq = 11000;
+	SavePlayerDataReq = 11001;
+	UserInternalVerifyReq = 11002;
+	UpdatePlayerRankReq = 11003;
+	CheckCanBuyOlshopItemReq = 11004;
+	CheckCanBuyOlshopItemRsp = 11005;
+	SavePlayerExtDataReq = 11006;
+	//	C<->S
+	LSAccessNtf = 11100;
+	VerifyAccountReq = 11101;
+	QuickMessageNtf = 11102;
+	ServerListNtf = 11103;
+	VerifyAccountRsp = 11104;
+}
+
+message MRegisterServerReq {
+	required string ServerName = 1;
+	required string exposeAddress = 2;
+}
+
+message MSavePlayerDataReq {
+	required int32 LID = 1;
+	required string Name = 2;
+	required uint32 UID = 3;
+	required uint32 Level = 4;
+	required bytes Data = 5;
+}
+
+message MUserInternalVerifyReq {
+	required int32 LID = 1;
+	required string AccessToken = 2;
+	required int32 GID = 3;
+	required int32 ConnCode = 4;
+}
+
+message MUpdatePlayerRankReq {
+	required uint32 UID = 1;
+	required string Name = 2;
+	required uint32 Level = 3;
+	required uint32 Job = 4;
+	required uint32 Power = 5;
+}
+
+message MCheckCanBuyOlshopItemReq {
+	required uint32 UID = 1;
+	required uint32 GID = 2;
+	required uint32 QueryId = 3;
+	required uint32 Cost = 4;
+	required uint32 ItemId = 5;
+}
+
+message MCheckCanBuyOlshopItemRsp {
+	required int32 Result = 1;
+	required uint32 UID = 2;
+	required uint32 GID = 3;
+	required uint32 QueryId = 4;
+	required uint32 ItemId = 5;
+}
+
+message MSavePlayerExtDataReq {
+	required int32 LID = 1;
+	required string Name = 2;
+	required uint32 UID = 3;
+	required uint32 ExtIndex = 4;
+	required bytes Data = 5;
+}
+
+message MLSAccessNtf {
+	required int32 LID = 1;
+	required string AccessToken = 2;
+}
+
+message MVerifyAccountReq {
+	required string Account = 1;
+	required string Password = 2;
+}
+
+message MQuickMessageNtf {
+	required int32 MsgId = 1;
+	required int32 Param = 2;
+}
+
+message MServerListItem {
+	required string ServerName = 1;
+	required string ServerAddress = 2;
+}
+
+message MServerListNtf {
+	repeated MServerListItem Servers = 1;
+}
+
+message MVerifyAccountRsp {
+	required int32 Result = 1;
+}

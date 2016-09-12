@@ -14,8 +14,23 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/cihub/seelog"
 	"github.com/sryanyuan/bmservers/shareutils"
 	"github.com/sryanyuan/tcpnetwork"
+)
+
+var (
+	kDefaultLogSetting = `
+	<seelog minlevel="debug">
+    	<outputs formatid="main">
+			<rollingfile namemode="postfix" type="date" filename="log/app.log" datepattern="060102" maxrolls="30"/>
+       		<console />
+    	</outputs>
+    	<formats>
+        	<format id="main" format="%Date/%Time [%LEV] %Msg (%File:%Line %FuncShort)%n"/>
+    	</formats>
+	</seelog>
+	`
 )
 
 var (
@@ -49,6 +64,25 @@ func main() {
 		fmt.Scanln(&input)
 	}()
 
+	//	init log module
+	var err error
+	logFilePath := "./conf/log.conf"
+	var logger seelog.LoggerInterface
+	logFileExist, _ := pathExists(logFilePath)
+
+	if !logFileExist {
+		//	using the default setting
+		log.Printf("[WRN] Can't open %s, using the default log setting: %s", logFilePath, kDefaultLogSetting)
+		logger, err = seelog.LoggerFromConfigAsString(kDefaultLogSetting)
+		if nil != err {
+			panic(err)
+		}
+	} else {
+		logger, err = seelog.LoggerFromConfigAsFile(logFilePath)
+		panic(err)
+	}
+	seelog.ReplaceLogger(logger)
+
 	g_ControlAddr = make([]string, 0, 10)
 	ReadControlAddr("./login/gmlist.txt")
 
@@ -75,13 +109,13 @@ func main() {
 
 	//	Initialize dll module
 	if !initDllModule("./login/BMHumSaveControl.dll") {
-		shareutils.LogErrorln("Can't load the save control module.")
-		//return
+		seelog.Error("Can't load the save control module.")
+		return
 	}
 	//	Initialize the database
 	g_DBUser = initDatabaseUser("./login/users.db")
 	if nil == g_DBUser {
-		shareutils.LogErrorln("Initialize database failed.")
+		seelog.Error("Initialize database failed.")
 		return
 	}
 	defer g_DBUser.Close()
@@ -117,63 +151,58 @@ func main() {
 	//	main thread message handler
 	MainThreadInit()
 
-	/*g_CtrlCh = make(chan uint8, 10)
-	ch := make(chan string, 10)
-	go go_handleInput(ch)*/
 	//	start scheduler
 	g_scheduleManager.Start()
 
 	timerTick := time.Tick(time.Duration(5) * time.Second)
 
-	if nil == g_ServerS.Listen(*ipaddrserver) && nil == g_ServerC.Listen(*ipaddrclient) {
-		shareutils.LogInfoln("Start process event.listen server:", *ipaddrserver, " listen client:", *ipaddrclient)
+	//	start servers
+	if err = g_ServerS.Listen(*ipaddrserver); nil != err {
+		seelog.Error(err)
+		return
+	}
+	if err = g_ServerC.Listen(*ipaddrclient); nil != err {
+		seelog.Error(err)
+		return
+	}
 
-		for {
-			select {
-			case evt := <-g_ServerS.GetEventQueue():
-				{
-					ProcessServerSEvent(evt)
-				}
-			case evt := <-g_ServerC.GetEventQueue():
-				{
-					ProcessServerCEvent(evt)
-				}
-			/*case input := <-ch:
+	seelog.Info("Start process event.listen server:", *ipaddrserver, " listen client:", *ipaddrclient)
+
+	for {
+		select {
+		case evt := <-g_ServerS.GetEventQueue():
 			{
-				ProcessInput(input)
+				//ProcessServerSEvent(evt)
+				processEventFromServer(evt)
 			}
-			case ctrl := <-g_CtrlCh:
-				{
-					if ctrl == 0 {
-						break
-					}
-				}*/
-			case evt := <-g_Redis.outputChan:
-				{
-					ProcessRedisEvent(evt)
-				}
-			case <-time.After(time.Duration(5) * time.Minute):
-				{
-					ReadControlAddr("./login/gmlist.txt")
-				}
-			case evt := <-g_chanMainThread:
-				{
-					ProcessMThreadMsg(evt)
-				}
-			case <-time.After(time.Duration(30) * time.Second):
-				{
-					UpdateMThreadMsg()
-				}
-			case <-timerTick:
-				{
-					UpdateTimerEvent()
-				}
+		case evt := <-g_ServerC.GetEventQueue():
+			{
+				ProcessServerCEvent(evt)
+			}
+		case evt := <-g_Redis.outputChan:
+			{
+				ProcessRedisEvent(evt)
+			}
+		case <-time.After(time.Duration(5) * time.Minute):
+			{
+				ReadControlAddr("./login/gmlist.txt")
+			}
+		case evt := <-g_chanMainThread:
+			{
+				ProcessMThreadMsg(evt)
+			}
+		case <-time.After(time.Duration(30) * time.Second):
+			{
+				UpdateMThreadMsg()
+			}
+		case <-timerTick:
+			{
+				UpdateTimerEvent()
 			}
 		}
 	}
 
 	shareutils.LogInfoln("Quit process event...")
-	//close(g_CtrlCh)
 	releaseDllModule()
 }
 
@@ -226,38 +255,4 @@ func ProcessRedisEvent(evt *RedisEvent) {
 			OfflineSaveUserData(evt.BinaryData)
 		}
 	}
-}
-
-func ProcessInput(input string) {
-	var cmd, param string = "", ""
-	_, err := fmt.Sscanf(input, "%s_%s", &cmd, &param)
-	if err != nil {
-		shareutils.LogErrorln("Parse user input error!Error[", err, "]")
-		return
-	}
-	switch cmd {
-	case "quit":
-		{
-			g_CtrlCh <- uint8(0)
-		}
-	}
-}
-
-func go_handleInput(ch chan string) {
-	shareutils.LogInfoln("Goroutine [go_handleInput] start...")
-
-	var (
-		cmd string
-	)
-
-	for {
-		_, err := fmt.Scanln(&cmd)
-		if err != nil {
-			shareutils.LogErrorln("Receive user input failed...Error[", err, "]")
-			break
-		}
-		ch <- cmd
-	}
-
-	shareutils.LogInfoln("Goroutine [go_handleInput] quit...")
 }

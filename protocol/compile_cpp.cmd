@@ -7,13 +7,9 @@
 @for %%F in (*.proto) do @(
 	@set _ITEM_=%%F
 	@echo .		%%F
-	@..\tools\protoc.exe %%F --go_out=%OUTPUT%
+	@..\tools\protoc.exe %%F --cpp_out=%OUTPUT%
 	@cd %~dp0
 )
-
-@SET GOPATH=%CD%/../../../../../
-@cd %OUTPUT%
-@go install
 
 @pause
 
