@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sryanyuan/bmservers/shareutils"
+	"github.com/cihub/seelog"
 )
 
 //	global variables
@@ -32,7 +32,7 @@ func startHttpServer(addr string) {
 	http.HandleFunc("/admin", adminHandler)
 	http.HandleFunc("/rs", rsHandler)
 
-	shareutils.LogInfoln("Start http server:", addr)
+	seelog.Info("Start http server:", addr)
 	go http.ListenAndServe(addr, nil)
 }
 
@@ -127,7 +127,7 @@ func getGsAddressHandler(w http.ResponseWriter, r *http.Request) {
 
 	gsId, err := strconv.Atoi(id)
 	if err != nil {
-		shareutils.LogErrorln("Invalid id argument.content:", id, "error:", err)
+		seelog.Error("Invalid id argument.content:", id, "error:", err)
 		rsp.Msg = "Invalid id argument"
 		bytes, _ := json.Marshal(rsp)
 		w.Write(bytes)
@@ -150,7 +150,7 @@ func getGsAddressHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(bytes)
 	} else {
 		rsp.Msg = "Invalid game server id or incorrect password.please check again."
-		shareutils.LogErrorln(rsp.Msg)
+		seelog.Error(rsp.Msg)
 		bytes, _ := json.Marshal(rsp)
 		w.Write(bytes)
 	}
@@ -183,7 +183,7 @@ func getGsListHandler(w http.ResponseWriter, r *http.Request) {
 	rsp.Servers = gsList
 	bytes, err := json.Marshal(rsp)
 	if err != nil {
-		shareutils.LogErrorln("Failed to marshal json.content:", gsList, "error:", err)
+		seelog.Error("Failed to marshal json.content:", gsList, "error:", err)
 		return
 	}
 
@@ -206,7 +206,7 @@ func registergsHandler(w http.ResponseWriter, r *http.Request) {
 			rsp.Msg = "Invalid address arguments"
 			data, err := json.Marshal(rsp)
 			if err != nil {
-				shareutils.LogErrorln("Failed to marshal json cotent.error:", err, "content:", rsp)
+				seelog.Error("Failed to marshal json cotent.error:", err, "content:", rsp)
 				return
 			}
 			w.Write(data)
@@ -221,7 +221,7 @@ func registergsHandler(w http.ResponseWriter, r *http.Request) {
 		rsp.Msg = "Invalid port arguments"
 		data, err := json.Marshal(rsp)
 		if err != nil {
-			shareutils.LogErrorln("Failed to marshal json cotent.error:", err, "content:", rsp)
+			seelog.Error("Failed to marshal json cotent.error:", err, "content:", rsp)
 			return
 		}
 		w.Write(data)
@@ -237,7 +237,7 @@ func registergsHandler(w http.ResponseWriter, r *http.Request) {
 	us.Address = addrArg
 	portInt, err := strconv.Atoi(portArg)
 	if err != nil {
-		shareutils.LogErrorln("Invalid port argument.not number.error:", err)
+		seelog.Error("Invalid port argument.not number.error:", err)
 		return
 	}
 	us.Port = portInt
@@ -252,7 +252,7 @@ func registergsHandler(w http.ResponseWriter, r *http.Request) {
 	tmsg.Event = kMThreadMsg_RegisterGS
 	bytes, err := json.Marshal(us)
 	if nil != err {
-		shareutils.LogErrorln("Failed to marshal json content.error:", err)
+		seelog.Error("Failed to marshal json content.error:", err)
 		return
 	}
 	tmsg.Msg = string(bytes)
@@ -266,7 +266,7 @@ func registergsHandler(w http.ResponseWriter, r *http.Request) {
 		rsp.Msg = strconv.Itoa(tmsg.WParam)
 		data, err := json.Marshal(rsp)
 		if err != nil {
-			shareutils.LogErrorln("Failed to marshal json cotent.error:", err, "content:", rsp)
+			seelog.Error("Failed to marshal json cotent.error:", err, "content:", rsp)
 			return
 		}
 		w.Write(data)
@@ -274,7 +274,7 @@ func registergsHandler(w http.ResponseWriter, r *http.Request) {
 		rsp.Msg = "Failed to register gs"
 		data, err := json.Marshal(rsp)
 		if err != nil {
-			shareutils.LogErrorln("Failed to marshal json cotent.error:", err, "content:", rsp)
+			seelog.Error("Failed to marshal json cotent.error:", err, "content:", rsp)
 			return
 		}
 		w.Write(data)

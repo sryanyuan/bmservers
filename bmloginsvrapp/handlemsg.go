@@ -10,7 +10,7 @@ import (
 
 	"github.com/sryanyuan/tcpnetwork"
 
-	"github.com/sryanyuan/bmservers/shareutils"
+	"github.com/cihub/seelog"
 )
 
 var (
@@ -72,12 +72,12 @@ func HandleCMsg(msg *tcpnetwork.ConnEvent) {
 	headreader.SetDataSource(msg.Data)
 	length = headreader.ReadMsgLength()
 	opcode = headreader.ReadMsgOpCode()
-	shareutils.LogDebugln("Receive client[", msg.Conn.GetConnId(), "] msg[length:", length, " opcode:", opcode, "]")
+	seelog.Debug("Receive client[", msg.Conn.GetConnId(), "] msg[length:", length, " opcode:", opcode, "]")
 
 	defer func() {
 		err := recover()
 		if err != nil {
-			shareutils.LogErrorln("A exception occured while processing msg[length:", length, " opcode:", opcode, "]", err)
+			seelog.Error("A exception occured while processing msg[length:", length, " opcode:", opcode, "]", err)
 		}
 	}()
 
@@ -101,7 +101,7 @@ func HandleCMsg(msg *tcpnetwork.ConnEvent) {
 					binary.Read(bytes.NewBuffer(data[9+namelen+1:9+namelen+1+pswlen]), binary.BigEndian, namebuf)
 					var pswstr string = string(namebuf)
 
-					shareutils.LogDebugln("Begin to verify user " + namestr)
+					seelog.Debug("Begin to verify user " + namestr)
 
 					var ret int = cltuser.VerifyUser(namestr, pswstr)
 					if 0 != ret {
@@ -148,7 +148,7 @@ func HandleSMsg(msg *tcpnetwork.ConnEvent) {
 	defer func() {
 		err := recover()
 		if err != nil {
-			shareutils.LogErrorln("A exception occured while processing msg[length:", length, " opcode:", opcode, "]", err)
+			seelog.Error("A exception occured while processing msg[length:", length, " opcode:", opcode, "]", err)
 			debug.PrintStack()
 		}
 	}()
@@ -175,7 +175,7 @@ func HandleSMsg(msg *tcpnetwork.ConnEvent) {
 							verifyok := false
 							verifyok = true
 							if verifyok {
-								shareutils.LogInfoln("server ", serverid, "verify ok")
+								seelog.Info("server ", serverid, "verify ok")
 								svruser.serverid = serverid
 								svruser.serverlsaddr = string(data[10+4+1 : 10+4+1+iplen])
 
@@ -184,22 +184,22 @@ func HandleSMsg(msg *tcpnetwork.ConnEvent) {
 								//g_AvaliableGS = msg.Conn.GetConnTag()
 								if svruser.serverid >= 0 && svruser.serverid < 100 {
 									g_AvaliableGS = uint32(msg.Conn.GetConnId())
-									shareutils.LogInfoln("Server[", serverid, "] registed... Tag[", g_AvaliableGS, "]")
+									seelog.Info("Server[", serverid, "] registed... Tag[", g_AvaliableGS, "]")
 									svruser.verified = true
 								} else if svruser.serverid >= 100 && svruser.serverid < 150 {
 									//	verify
 									svruser.verified = true
 								}
 							} else {
-								shareutils.LogErrorln("server ", serverid, "verify failed")
+								seelog.Error("server ", serverid, "verify failed")
 								var vok uint8 = 0
 								user.SendUserMsg(loginopstart+3, &vok)
 							}
 						} else {
-							shareutils.LogErrorln("verify length not equal", 8+2+4+1+uint32(iplen), " ", length)
+							seelog.Error("verify length not equal", 8+2+4+1+uint32(iplen), " ", length)
 						}
 					} else {
-						shareutils.LogErrorln("verify pkg length not equal ", 8+2+4+1)
+						seelog.Error("verify pkg length not equal ", 8+2+4+1)
 					}
 				}
 			} else {
@@ -212,9 +212,9 @@ func HandleSMsg(msg *tcpnetwork.ConnEvent) {
 				}
 			}
 		} else {
-			shareutils.LogErrorln("Can't convert user to type ServerUser")
+			seelog.Error("Can't convert user to type ServerUser")
 		}
 	} else {
-		shareutils.LogErrorln("Can't find the server tag[", msg.Conn.GetConnId(), "]")
+		seelog.Error("Can't find the server tag[", msg.Conn.GetConnId(), "]")
 	}
 }

@@ -2,6 +2,9 @@ package main
 
 import (
 	"time"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/sryanyuan/bmservers/protocol"
 )
 
 //	timer player rank
@@ -14,18 +17,10 @@ func UpdateTimerEvent() {
 		g_lastSendPlayerTime = nowTime
 		//	update player rank
 		if nil != g_DBUser {
-			rankListData := getPlayerRankList()
-			for _, svr := range g_ServerList.allusers {
-				svrUser, ok := svr.(*ServerUser)
-				if !ok ||
-					nil == svrUser {
-					continue
-				}
-
-				if svrUser.serverid >= 0 &&
-					svrUser.serverid < 100 {
-					svrUser.SendUserMsg(loginopstart+22, rankListData)
-				}
+			var rankNtf protocol.MSyncPlayerRankNtf
+			for _, gs := range serverNodeMap {
+				rankNtf.Data = proto.String(getPlayerRankListV2(gs.serverId))
+				sendProto(gs.conn, uint32(protocol.LSOp_SyncPlayerRankNtf), &rankNtf)
 			}
 		}
 	}

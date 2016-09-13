@@ -4,8 +4,8 @@ import (
 	"container/list"
 	"strconv"
 
+	"github.com/cihub/seelog"
 	"github.com/jakecoffman/cron"
-	"github.com/sryanyuan/bmservers/shareutils"
 )
 
 type SchduleActiveCallback func(int)
@@ -28,7 +28,7 @@ func (this *ScheduleJob) Run() {
 	if nil != this.callback {
 		this.callback(this.id)
 	} else {
-		shareutils.LogErrorln("Invalid callback function")
+		seelog.Error("Invalid callback function")
 	}
 }
 
@@ -61,7 +61,7 @@ func (this *ScheduleManager) AddJob(id int, scheduleExpr string) *ScheduleJob {
 	for e := this.jobs.Front(); e != nil; e = e.Next() {
 		j := e.Value.(*ScheduleJob)
 		if j.id == id {
-			shareutils.LogErrorln("Job id:", id, "already exists")
+			seelog.Error("Job id:", id, "already exists")
 			return nil
 		}
 	}

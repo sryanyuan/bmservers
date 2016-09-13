@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/cihub/seelog"
-	"github.com/sryanyuan/bmservers/shareutils"
 	"github.com/sryanyuan/tcpnetwork"
 )
 
@@ -51,14 +50,14 @@ var (
 
 func exceptionDetails() {
 	if err := recover(); err != nil {
-		shareutils.LogErrorln("Exception!error:", err, "stack:")
+		seelog.Error("Exception!error:", err, "stack:")
 		debug.PrintStack()
 	}
 }
 
 func main() {
 	defer func() {
-		shareutils.LogInfoln("Server terminated.")
+		seelog.Info("Server terminated.")
 		exceptionDetails()
 		var input string
 		fmt.Scanln(&input)
@@ -90,8 +89,9 @@ func main() {
 	ipaddrclient := flag.String("lsaddr", "", "Listen clients")
 	ipaddrserver := flag.String("lsgsaddr", "", "Listen gameserver")
 	redisAddress := flag.String("redisaddr", "", "Redis address")
-	httpAddr := flag.String("httpaddr", "", "http listen address")
-	logConfig := flag.String("logconfig", "LogToFile:false_LogPrefix:LEVEL+FILELINE_LogPriority:DEBUG", "log config")
+	httpAddr := flag.String("httpaddr", "", "http listen address (for game room)")
+	rpcHttpAddr := flag.String("rpc-http-addr", "", "rpc address")
+	webHttpAddr := flag.String("web-http-addr", "", "web http address")
 	flag.Parse()
 	if len(*ipaddrclient) == 0 || len(*ipaddrserver) == 0 {
 		log.Println("invalid input parameters.")
@@ -99,19 +99,12 @@ func main() {
 		return
 	}
 
-	shareutils.DefaultLogHelper().Init("bmloginsvrapp", *logConfig)
-
-	shareutils.LogInfoln("BackMIR Login Server started.")
+	seelog.Info("BackMIR Login Server started.")
 	//	Initialize directory
 	if !PathExist("./login") {
 		os.Mkdir("./login", os.ModeDir)
 	}
 
-	//	Initialize dll module
-	if !initDllModule("./login/BMHumSaveControl.dll") {
-		seelog.Error("Can't load the save control module.")
-		return
-	}
 	//	Initialize the database
 	g_DBUser = initDatabaseUser("./login/users.db")
 	if nil == g_DBUser {
@@ -119,6 +112,12 @@ func main() {
 		return
 	}
 	defer g_DBUser.Close()
+
+	//	Initialize dll module
+	if !initDllModule("./login/BMHumSaveControl.dll") {
+		seelog.Error("Can't load the save control module.")
+		return
+	}
 
 	//	Initialize bug report database
 	g_DBCrashReport = initDatabaseCrashReport("./login/crashreport.db")
@@ -146,6 +145,17 @@ func main() {
 	if httpAddr != nil &&
 		len(*httpAddr) != 0 {
 		startHttpServer(*httpAddr)
+	}
+
+	//	rpc server
+	if rpcHttpAddr != nil &&
+		len(*rpcHttpAddr) != 0 {
+		startRPCServer(*rpcHttpAddr)
+	}
+
+	//	web server
+	if len(*webHttpAddr) != 0 {
+		startWebServer(*webHttpAddr)
 	}
 
 	//	main thread message handler
@@ -202,7 +212,7 @@ func main() {
 		}
 	}
 
-	shareutils.LogInfoln("Quit process event...")
+	seelog.Info("Quit process event...")
 	releaseDllModule()
 }
 
@@ -222,7 +232,7 @@ func ProcessServerCEvent(evt *tcpnetwork.ConnEvent) {
 		}
 	default:
 		{
-			shareutils.LogWarnln("Unsolved ConnEvent[evtid:", evt.EventType, "]")
+			seelog.Warn("Unsolved ConnEvent[evtid:", evt.EventType, "]")
 		}
 	}
 }
@@ -243,7 +253,7 @@ func ProcessServerSEvent(evt *tcpnetwork.ConnEvent) {
 		}
 	default:
 		{
-			shareutils.LogWarnln("Unsolved ConnEvent[evtid:", evt.EventType, "]")
+			seelog.Warn("Unsolved ConnEvent[evtid:", evt.EventType, "]")
 		}
 	}
 }

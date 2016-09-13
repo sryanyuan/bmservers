@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/sryanyuan/bmservers/shareutils"
+	"github.com/cihub/seelog"
 )
 
 type RsHandlerRsp struct {
@@ -52,7 +52,7 @@ func rsHandler(w http.ResponseWriter, r *http.Request) {
 
 	action := r.FormValue("action")
 
-	shareutils.LogInfoln("register server request:", action)
+	seelog.Info("register server request:", action)
 
 	switch action {
 	case "registeraccount":
@@ -82,9 +82,9 @@ func rsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if evtRet {
-				shareutils.LogInfoln("register account [", account, "] success")
+				seelog.Info("register account [", account, "] success")
 			} else {
-				shareutils.LogWarnln("register account [", account, "] failed")
+				seelog.Warn("register account [", account, "] failed")
 			}
 		}
 	case "modifypassword":
@@ -114,9 +114,9 @@ func rsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if evtRet {
-				shareutils.LogInfoln("modify password [", account, "] success")
+				seelog.Info("modify password [", account, "] success")
 			} else {
-				shareutils.LogWarnln("modify password [", account, "] failed")
+				seelog.Warn("modify password [", account, "] failed")
 			}
 		}
 	default:

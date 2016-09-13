@@ -8,7 +8,7 @@ import (
 	"log"
 	"unsafe"
 
-	"github.com/sryanyuan/bmservers/shareutils"
+	"github.com/cihub/seelog"
 )
 
 //	CGO无法创建test 就这样写了
@@ -17,7 +17,7 @@ func bmDllTest() {
 	defer func() {
 		e := recover()
 		if e != nil {
-			shareutils.LogErrorln(e)
+			seelog.Error(e)
 			var input string
 			fmt.Scanln(&input)
 		}
@@ -26,14 +26,14 @@ func bmDllTest() {
 	//	Test CreateHumSave
 	r1, _, _ := g_procMap["CreateHumSave"].Call(uintptr(unsafe.Pointer(C.CString("hum.zip"))))
 	if r1 != 0 {
-		shareutils.LogErrorln("CreateHumSave failed.")
+		seelog.Error("CreateHumSave failed.")
 	}
 
 	//	Test OpenHumSave
 	var filehandle uintptr = 0
 	r1, _, _ = g_procMap["OpenHumSave"].Call(uintptr(unsafe.Pointer(C.CString("hum.zip"))))
 	if r1 == 0 {
-		shareutils.LogErrorln("OpenHumSave failed.")
+		seelog.Error("OpenHumSave failed.")
 	} else {
 		filehandle = r1
 	}
@@ -45,7 +45,7 @@ func bmDllTest() {
 		uintptr(job),
 		uintptr(sex))
 	if r1 != 0 {
-		shareutils.LogErrorln("AddGameRole failed.ret:", r1)
+		seelog.Error("AddGameRole failed.ret:", r1)
 	}
 	r1, _, _ = g_procMap["AddGameRole"].Call(filehandle,
 		uintptr(unsafe.Pointer(C.CString("god01"))),

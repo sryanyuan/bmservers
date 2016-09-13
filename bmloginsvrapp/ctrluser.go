@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/sryanyuan/bmservers/shareutils"
+	"github.com/cihub/seelog"
 )
 
 func (this *ServerUser) OnCtrlMsg(msg []byte) {
@@ -24,7 +24,7 @@ func (this *ServerUser) OnCtrlMsg(msg []byte) {
 	head := &LSControlProto.LSCHead{}
 	err := proto.Unmarshal(msg[5:5+headlen], head)
 	if err != nil {
-		shareutils.LogErrorln("Failed to unmarshal proto head")
+		seelog.Error("Failed to unmarshal proto head")
 		return
 	}
 
@@ -32,18 +32,18 @@ func (this *ServerUser) OnCtrlMsg(msg []byte) {
 	defer func() {
 		except := recover()
 		if except != nil {
-			shareutils.LogErrorln(except)
+			seelog.Error(except)
 		}
 
 		if err != nil {
-			shareutils.LogErrorln(err)
+			seelog.Error(err)
 		}
 	}()
 
 	opcode := LSControlProto.Opcode(head.GetOpcode())
 	var oft_body_start int = 5 + int(headlen)
 	if opcode != LSControlProto.Opcode_PKG_HeartBeat {
-		shareutils.LogDebugln("Ctrl msg[", opcode, "]")
+		seelog.Debug("Ctrl msg[", opcode, "]")
 	}
 
 	if !this.ctrlverify {
@@ -52,21 +52,21 @@ func (this *ServerUser) OnCtrlMsg(msg []byte) {
 			ctrlVerifyReq := &LSControlProto.LSCCtrlVerifyReq{}
 			err = proto.Unmarshal(msg[oft_body_start:], ctrlVerifyReq)
 			if err != nil {
-				shareutils.LogErrorln("proto unmarshal error.", err)
+				seelog.Error("proto unmarshal error.", err)
 				return
 			}
 
-			shareutils.LogInfoln("Verify ctrl terminal[", ctrlVerifyReq.GetVerifycode(), "]")
+			seelog.Info("Verify ctrl terminal[", ctrlVerifyReq.GetVerifycode(), "]")
 
 			ret := &LSControlProto.LSCCtrlVerifyAck{}
 			ret.Result = proto.Bool(true)
 
 			if ControlValid(ctrlVerifyReq.GetVerifycode()) {
 				this.ctrlverify = true
-				shareutils.LogInfoln("pass[", ctrlVerifyReq.GetVerifycode(), "]")
+				seelog.Info("pass[", ctrlVerifyReq.GetVerifycode(), "]")
 			} else {
 				ret.Result = proto.Bool(false)
-				shareutils.LogWarnln("invalid terminal[", ctrlVerifyReq.GetVerifycode(), "]")
+				seelog.Warn("invalid terminal[", ctrlVerifyReq.GetVerifycode(), "]")
 				//this.conn.GetInternalConn().Close()
 			}
 
@@ -132,7 +132,7 @@ func (this *ServerUser) SendProtoBuf(opcode uint32, msg []byte) bool {
 	head.Opcode = proto.Uint32(opcode)
 	headbuf, err := proto.Marshal(head)
 	if err != nil {
-		shareutils.LogErrorln(err)
+		seelog.Error(err)
 		return false
 	}
 
@@ -187,7 +187,7 @@ func (this *ServerUser) OnRsRegistAccountReq(req *LSControlProto.RSRegistAccount
 	data, err := proto.Marshal(ack)
 
 	if err != nil {
-		shareutils.LogErrorln(err)
+		seelog.Error(err)
 		return
 	}
 
@@ -231,7 +231,7 @@ func (this *ServerUser) OnRegistAccountReq(req *LSControlProto.LSCRegistAccountR
 	data, err := proto.Marshal(ack)
 
 	if err != nil {
-		shareutils.LogErrorln(err)
+		seelog.Error(err)
 		return
 	}
 
@@ -250,7 +250,7 @@ func (this *ServerUser) OnRsMofifyPassword(req *LSControlProto.RSModifyPasswordR
 		rsp.Result = proto.Bool(false)
 		data, err := proto.Marshal(rsp)
 		if err != nil {
-			shareutils.LogErrorln(err)
+			seelog.Error(err)
 			return
 		}
 
@@ -262,7 +262,7 @@ func (this *ServerUser) OnRsMofifyPassword(req *LSControlProto.RSModifyPasswordR
 		rsp.Result = proto.Bool(false)
 		data, err := proto.Marshal(rsp)
 		if err != nil {
-			shareutils.LogErrorln(err)
+			seelog.Error(err)
 			return
 		}
 
@@ -273,7 +273,7 @@ func (this *ServerUser) OnRsMofifyPassword(req *LSControlProto.RSModifyPasswordR
 	rsp.Result = proto.Bool(true)
 	data, err := proto.Marshal(rsp)
 	if err != nil {
-		shareutils.LogErrorln(err)
+		seelog.Error(err)
 		return
 	}
 

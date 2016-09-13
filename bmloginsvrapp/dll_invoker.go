@@ -1,11 +1,9 @@
 package main
 
 import (
-	//"dbgutil"
-	//	"log"
 	"syscall"
 
-	"github.com/sryanyuan/bmservers/shareutils"
+	"github.com/cihub/seelog"
 )
 
 var (
@@ -57,7 +55,7 @@ func initDllModule(name string) bool {
 	allLoaded := true
 	g_dllHumSave, err := syscall.LoadDLL(name)
 	if err != nil {
-		shareutils.LogErrorln("Can't load [", name, "]")
+		seelog.Error("Can't load [", name, "]")
 		return false
 	}
 	//	Get all module
@@ -65,10 +63,10 @@ func initDllModule(name string) bool {
 		proc, err := g_dllHumSave.FindProc(str)
 		if err == nil {
 			g_procMap[str] = proc
-			shareutils.LogInfoln("Proccess address[", str, "] loaded...")
+			seelog.Info("Proccess address[", str, "] loaded...")
 			//dbgutil.Display("ProcName", str, "ProcAddr", proc)
 		} else {
-			shareutils.LogErrorln("ProcName[", str, "] load failed...", err)
+			seelog.Error("ProcName[", str, "] load failed...", err)
 			allLoaded = false
 		}
 	}
@@ -81,7 +79,7 @@ func releaseDllModule() {
 		for _, str := range g_procDllName {
 			delete(g_procMap, str)
 		}
-		shareutils.LogInfoln(g_dllHumSave.Name, " has been released...")
+		seelog.Info(g_dllHumSave.Name, " has been released...")
 		g_dllHumSave.Release()
 	}
 }

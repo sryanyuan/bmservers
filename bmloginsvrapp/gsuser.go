@@ -15,7 +15,7 @@ import (
 
 	"github.com/sryanyuan/tcpnetwork"
 
-	"github.com/sryanyuan/bmservers/shareutils"
+	"github.com/cihub/seelog"
 )
 
 type ServerUser struct {
@@ -43,7 +43,7 @@ func CreateServerUser(clientconn *tcpnetwork.Connection) *ServerUser {
 }
 
 func (this *ServerUser) OnConnect() {
-	shareutils.LogInfoln("GameServer ", this.ipaddr, " connected... id:", this.serverid)
+	seelog.Info("GameServer ", this.ipaddr, " connected... id:", this.serverid)
 	if this.serverid >= 0 &&
 		this.serverid < 100 {
 
@@ -59,7 +59,7 @@ func (this *ServerUser) OnVerified() {
 func (this *ServerUser) OnDisconnect() {
 	if g_AvaliableGS == uint32(this.conn.GetConnId()) {
 		g_AvaliableGS = 0
-		shareutils.LogInfoln("Server", this.conn.GetConnId(), "disconnected")
+		seelog.Info("Server", this.conn.GetConnId(), "disconnected")
 
 		//	remove all relative cron job
 		jobs := g_scheduleManager.GetJobs()
@@ -164,19 +164,19 @@ func (this *ServerUser) OnUserMsg(msg []byte) {
 			var cuser *User
 			var ok bool = false
 			if nil == iuser {
-				shareutils.LogDebugln("Can't get the player wants save data")
+				seelog.Debug("Can't get the player wants save data")
 				this.OnOfflineSave(msg)
 				return
 			} else {
 				cuser, ok = iuser.(*User)
 				if !ok {
-					shareutils.LogErrorln("Can't transform IUser to *User")
+					seelog.Error("Can't transform IUser to *User")
 					return
 				}
 			}
 
 			if len(msg) != calclen {
-				shareutils.LogErrorln("Invalid packet length[", len(msg), "], calc[", calclen, "]", "namelen", namelen, "datalen", datalen)
+				seelog.Error("Invalid packet length[", len(msg), "], calc[", calclen, "]", "namelen", namelen, "datalen", datalen)
 			} else {
 				if uid != 0 {
 					cuser.OnRequestSaveGameRole(msg)
@@ -195,12 +195,12 @@ func (this *ServerUser) OnUserMsg(msg []byte) {
 
 			cuser := g_UserList.GetUser(lsidx)
 			if cuser == nil {
-				shareutils.LogErrorln("Can't registe user[", lsidx, "]")
+				seelog.Error("Can't registe user[", lsidx, "]")
 			} else {
 				user := cuser.(*User)
 				user.svrconnidx = gsidx
 				user.conncode = conncode
-				shareutils.LogInfoln("Registe user gs index ok! gs index ", gsidx, " conn code:", conncode)
+				seelog.Info("Registe user gs index ok! gs index ", gsidx, " conn code:", conncode)
 			}
 		}
 	case loginopstart + 21:
@@ -220,7 +220,7 @@ func (this *ServerUser) OnUserMsg(msg []byte) {
 				name = string(msg[8+4+4 : 8+4+4+nameLength])
 				nameLength++
 			} else {
-				shareutils.LogErrorln("Trying to update player rank with no name.")
+				seelog.Error("Trying to update player rank with no name.")
 				return
 			}
 
@@ -229,7 +229,7 @@ func (this *ServerUser) OnUserMsg(msg []byte) {
 			binary.Read(bytes.NewBuffer(msg[8+4+4+nameLength+4+1:]), binary.LittleEndian, &power)
 
 			if 0 == level {
-				shareutils.LogErrorln("Trying to update player rank with 0 level.")
+				seelog.Error("Trying to update player rank with 0 level.")
 				return
 			}
 
@@ -241,7 +241,7 @@ func (this *ServerUser) OnUserMsg(msg []byte) {
 			rankInfo.Name = name
 			rankInfo.Power = int(power)
 			if !dbUpdateUserRankInfo(g_DBUser, &rankInfo) {
-				shareutils.LogErrorln("Failed to insert player rank info")
+				seelog.Error("Failed to insert player rank info")
 			}
 		}
 	case loginopstart + 23:
@@ -266,7 +266,7 @@ func (this *ServerUser) OnUserMsg(msg []byte) {
 			if ret {
 				retInt8 = 1
 			}
-			shareutils.LogDebugln("Player[", uid, "] consume item:", itemid, "result:", ret)
+			seelog.Debug("Player[", uid, "] consume item:", itemid, "result:", ret)
 			this.SendUserMsg(loginopstart+24, retInt8, uid, gsid, queryId, itemid)
 		}
 	case loginopstart + 25:
@@ -288,7 +288,7 @@ func (this *ServerUser) OnUserMsg(msg []byte) {
 				name = string(msg[8+4+4+4 : 8+4+4+4+nameLength])
 				nameLength++
 			} else {
-				shareutils.LogErrorln("Invalid buyer name")
+				seelog.Error("Invalid buyer name")
 				return
 			}
 			binary.Read(bytes.NewBuffer(msg[8+4+4+4+nameLength:8+4+4+4+nameLength+4]), binary.LittleEndian, &itemid)
@@ -314,7 +314,7 @@ func (this *ServerUser) OnUserMsg(msg []byte) {
 			binary.Read(bytes.NewBuffer(msg[8+8+1+namelen+2:8+8+1+namelen+2+4]), binary.LittleEndian, &datalen)
 			var calclen int = int(uint32(namelen) + datalen + 1 + 4 + 4 + 2 + 8 + 4)
 			if len(msg) != calclen {
-				shareutils.LogErrorln("Invalid packet length[", len(msg), "], calc[", calclen, "]", "namelen", namelen, "datalen", datalen)
+				seelog.Error("Invalid packet length[", len(msg), "], calc[", calclen, "]", "namelen", namelen, "datalen", datalen)
 				return
 			}
 
@@ -333,7 +333,7 @@ func (this *ServerUser) OnUserMsg(msg []byte) {
 				cronExpr = string(msg[8+4+4 : 8+4+4+cronExprLength])
 				cronExprLength++
 			} else {
-				shareutils.LogErrorln("Invalid cron expression")
+				seelog.Error("Invalid cron expression")
 				return
 			}
 
@@ -343,7 +343,7 @@ func (this *ServerUser) OnUserMsg(msg []byte) {
 			ud.Data = int(this.conn.GetConnId())
 			job.data = ud
 
-			shareutils.LogInfoln("Cron schedule[", evtId, "] register ok!expr:", cronExpr)
+			seelog.Info("Cron schedule[", evtId, "] register ok!expr:", cronExpr)
 		}
 	case loginopstart + 33:
 		{
@@ -366,7 +366,7 @@ func SaveHumExtData(msg []byte) {
 	var extIndex uint16
 	binary.Read(bytes.NewBuffer(msg[8+8+1+namelen:8+8+1+namelen+2]), binary.LittleEndian, &extIndex)
 
-	shareutils.LogDebugln(name, " request to save extend data.ext index:", extIndex)
+	seelog.Debug(name, " request to save extend data.ext index:", extIndex)
 
 	//	Create save file
 	userfile := "./login/" + strconv.FormatUint(uint64(uid), 10) + "/hum.sav"
@@ -378,7 +378,7 @@ func SaveHumExtData(msg []byte) {
 	//no free !r1, _, _ = g_procMap["OpenHumSave"].Call(uintptr(unsafe.Pointer(C.CString(userfile))))
 	r1, _, _ = g_procMap["OpenHumSave"].Call(uintptr(unsafe.Pointer(cuserfile)))
 	if r1 == 0 {
-		shareutils.LogErrorln("Can't open hum save.Err:", r1)
+		seelog.Error("Can't open hum save.Err:", r1)
 		return
 	}
 	var filehandle uintptr = r1
@@ -391,7 +391,7 @@ func SaveHumExtData(msg []byte) {
 
 	r1, _, _ = g_procMap["WriteExtendData"].Call(filehandle, uintptr(unsafe.Pointer(cname)), uintptr(extIndex), uintptr(unsafe.Pointer(&data[0])), uintptr(datalen))
 	if r1 != 0 {
-		shareutils.LogErrorln("Failed to write gamerole extend data")
+		seelog.Error("Failed to write gamerole extend data")
 	}
 }
 
@@ -405,7 +405,7 @@ func OfflineSaveUserData(msg []byte) {
 	var uid uint32
 	binary.Read(bytes.NewBuffer(msg[8+4:8+4+4]), binary.LittleEndian, &uid)
 
-	shareutils.LogDebugln(name, " request to save data on offline mode.")
+	seelog.Debug(name, " request to save data on offline mode.")
 
 	//	Create save file
 	userfile := "./login/" + strconv.FormatUint(uint64(uid), 10) + "/hum.sav"
@@ -417,7 +417,7 @@ func OfflineSaveUserData(msg []byte) {
 	//no free !r1, _, _ = g_procMap["OpenHumSave"].Call(uintptr(unsafe.Pointer(C.CString(userfile))))
 	r1, _, _ = g_procMap["OpenHumSave"].Call(uintptr(unsafe.Pointer(cuserfile)))
 	if r1 == 0 {
-		shareutils.LogErrorln("Can't open hum save.Err:", r1)
+		seelog.Error("Can't open hum save.Err:", r1)
 		return
 	}
 	var filehandle uintptr = r1
@@ -432,12 +432,12 @@ func OfflineSaveUserData(msg []byte) {
 	binary.Read(bytes.NewBuffer(msg[8+8+1+namelen:8+8+1+namelen+2]), binary.LittleEndian, &level)
 	r1, _, _ = g_procMap["UpdateGameRoleInfo"].Call(filehandle, uintptr(unsafe.Pointer(cname)), uintptr(level))
 	if r1 != 0 {
-		shareutils.LogErrorln("Failed to update gamerole head data")
+		seelog.Error("Failed to update gamerole head data")
 	}
 
 	r1, _, _ = g_procMap["WriteGameRoleData"].Call(filehandle, uintptr(unsafe.Pointer(cname)), uintptr(unsafe.Pointer(&data[0])), uintptr(datalen))
 	if r1 != 0 {
-		shareutils.LogErrorln("Failed to write gamerole data")
+		seelog.Error("Failed to write gamerole data")
 	}
 }
 
@@ -498,8 +498,8 @@ func (this *ServerUser) OnResponseClientLogin(msg []byte) {
 		binary.Read(bytes.NewBuffer(msg[8+1+4:8+1+4+1]), binary.LittleEndian, &addrlen)
 		var addr string = string(msg[8+1+4+1 : 8+1+4+1+addrlen])
 		//	send to client
-		shareutils.LogDebugln(clientindex)
-		shareutils.LogDebugln(addr)
+		seelog.Debug(clientindex)
+		seelog.Debug(addr)
 	}
 }
 
@@ -511,7 +511,7 @@ func (this *ServerUser) OnRequestSave(msg []byte) {
 	// no free!r1, _, _ := g_procMap["OpenHumSave"].Call(uintptr(unsafe.Pointer(C.CString(userfile))))
 	r1, _, _ := g_procMap["OpenHumSave"].Call(uintptr(unsafe.Pointer(cuserfile)))
 	if r1 == 0 {
-		shareutils.LogErrorln("Can't open hum save.Err:", r1)
+		seelog.Error("Can't open hum save.Err:", r1)
 		return
 	}
 	var filehandle uintptr = r1
@@ -568,7 +568,7 @@ func ReadControlAddr(path string) bool {
 	//	read control addr
 	file, err := os.Open(path)
 	if err != nil {
-		shareutils.LogErrorln(err)
+		seelog.Error(err)
 		return false
 	}
 
@@ -576,7 +576,7 @@ func ReadControlAddr(path string) bool {
 	defer file.Close()
 	readbytes, readerr := file.Read(buf)
 	if readerr != nil {
-		shareutils.LogErrorln(err)
+		seelog.Error(err)
 		return false
 	}
 
@@ -584,7 +584,7 @@ func ReadControlAddr(path string) bool {
 	g_ControlAddr = strings.Split(content, "\r\n")
 
 	for _, v := range g_ControlAddr {
-		shareutils.LogErrorln("Controller: ", v, " length", len(v))
+		seelog.Error("Controller: ", v, " length", len(v))
 	}
 	return true
 }

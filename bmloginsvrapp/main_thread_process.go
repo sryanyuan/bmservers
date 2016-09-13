@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/sryanyuan/bmservers/shareutils"
+	"github.com/cihub/seelog"
 )
 
 const (
@@ -144,7 +144,7 @@ func ProcessMThreadMsg(msg *MThreadMsg) {
 			if len(msg.Msg) != 0 {
 				err := json.Unmarshal([]byte(msg.Msg), &ugs)
 				if err != nil {
-					shareutils.LogErrorln("Failed to unmarshal content:", msg.Msg, "error:", err)
+					seelog.Error("Failed to unmarshal content:", msg.Msg, "error:", err)
 				} else {
 					msg.WParam = AddUserGameServer(&ugs)
 					ret = true
@@ -320,10 +320,10 @@ func ProcessMThreadMsg(msg *MThreadMsg) {
 		}
 	case kMThreadMsg_ScheduleActive:
 		{
-			shareutils.LogInfoln("Schedule job:", msg.WParam, "active.")
+			seelog.Info("Schedule job:", msg.WParam, "active.")
 			job := g_scheduleManager.GetJob(msg.WParam)
 			if nil == job {
-				shareutils.LogErrorln("Invalid schedule job, id:", msg.WParam)
+				seelog.Error("Invalid schedule job, id:", msg.WParam)
 				return
 			}
 
@@ -350,7 +350,7 @@ func ProcessMThreadMsg(msg *MThreadMsg) {
 		}
 	default:
 		{
-			shareutils.LogWarnln("Unprocessed mthread event id:", msg.Event)
+			seelog.Warn("Unprocessed mthread event id:", msg.Event)
 		}
 	}
 }

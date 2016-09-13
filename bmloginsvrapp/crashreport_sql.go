@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"os"
 
+	"github.com/cihub/seelog"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/sryanyuan/bmservers/shareutils"
 )
 
 func initDatabaseCrashReport(path string) *sql.DB {
@@ -13,7 +13,7 @@ func initDatabaseCrashReport(path string) *sql.DB {
 	if !PathExist(path) {
 		file, err := os.Create(path)
 		if err != nil {
-			shareutils.LogErrorln("Can't create db file.", err)
+			seelog.Error("Can't create db file.", err)
 			return nil
 		} else {
 			newdb = true
@@ -24,7 +24,7 @@ func initDatabaseCrashReport(path string) *sql.DB {
 	//	Connect db
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
-		shareutils.LogErrorln("Can't open db file.", err)
+		seelog.Error("Can't open db file.", err)
 		return nil
 	}
 
@@ -34,7 +34,7 @@ func initDatabaseCrashReport(path string) *sql.DB {
 		`
 		_, err = db.Exec(sqlexpr)
 		if err != nil {
-			shareutils.LogErrorln("Create new table failed.Error:", err)
+			seelog.Error("Create new table failed.Error:", err)
 			db.Close()
 			return nil
 		}
@@ -48,7 +48,7 @@ func initDatabaseCrashReport(path string) *sql.DB {
 func dbIsCrashReportExists(db *sql.DB, version string, errorcode string, erroraddr string) bool {
 	rows, err := db.Query("select count(*) as cnt from crashreport where version='?' and errorcode='?' and erroraddr='?'", version, errorcode, erroraddr)
 	if err != nil {
-		shareutils.LogErrorf("Error on selecting uid,error[%s]", err.Error())
+		seelog.Errorf("Error on selecting uid,error[%s]", err.Error())
 		return true
 	}
 
@@ -69,7 +69,7 @@ func dbIncCrashReportTimes(db *sql.DB, version string, errorcode string, errorad
 	//	get times
 	rows, err := db.Query("select times from crashreport where version = '?' and errorcode='?' and erroraddr='?'", version, errorcode, erroraddr)
 	if err != nil {
-		shareutils.LogErrorln(err)
+		seelog.Error(err)
 		return false
 	}
 
@@ -87,7 +87,7 @@ func dbIncCrashReportTimes(db *sql.DB, version string, errorcode string, errorad
 
 	_, err = db.Exec("update crashreport where version='?' and errorcode='?' and erroraddr='?'", version, errorcode, erroraddr)
 	if err != nil {
-		shareutils.LogErrorln("db exec failed. err:", err)
+		seelog.Error("db exec failed. err:", err)
 		return false
 	}
 
@@ -107,7 +107,7 @@ func dbInsertCrashReport(db *sql.DB, version string, errorcode string, erroraddr
 
 	_, err := db.Exec("insert into crashreport values(null, '?', '?', '?', ?)", version, errorcode, erroraddr, 1)
 	if err != nil {
-		shareutils.LogErrorln("db exec failed.err:", err)
+		seelog.Error("db exec failed.err:", err)
 		return false
 	}
 

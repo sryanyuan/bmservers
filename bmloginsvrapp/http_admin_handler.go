@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/sryanyuan/bmservers/shareutils"
+	"github.com/cihub/seelog"
 )
 
 const (
@@ -166,29 +166,19 @@ func adminHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			evt := &MThreadMsg{}
-			evt.Event = kMThreadMsg_VerifyAdmin
-			evt.Msg = account + " " + password
-			evt.RetChan = make(chan bool, 1)
-			PostMThreadMsg(evt)
-			evtRet, timeout := WaitMThreadMsg(evt, 500)
-
-			if timeout {
-				rsp.Msg = "Request timeout"
+			ok, level := dbAdminAccountVerify(g_DBUser, account, password)
+			if !ok {
+				rsp.Msg = "Verify administrator account failed"
 			} else {
-				if !evtRet {
-					rsp.Msg = "Verify administrator account failed"
+				//	添加新的session
+				session := NewAdminHandlerSession(r.RemoteAddr, account, level)
+				if nil == session {
+					rsp.Msg = "Cannot generate new session"
 				} else {
-					//	添加新的session
-					session := NewAdminHandlerSession(r.RemoteAddr, account, evt.WParam)
-					if nil == session {
-						rsp.Msg = "Cannot generate new session"
-					} else {
-						newCookie := http.Cookie{Name: "verifycode", Value: session.Guid, Path: "/"}
-						http.SetCookie(w, &newCookie)
-						rsp.Msg = "Verify success"
-						shareutils.LogInfoln("New session  ip:", session.IP, " guid:", session.Guid)
-					}
+					newCookie := http.Cookie{Name: "verifycode", Value: session.Guid, Path: "/"}
+					http.SetCookie(w, &newCookie)
+					rsp.Msg = "Verify success"
+					seelog.Info("New session  ip:", session.IP, " guid:", session.Guid)
 				}
 			}
 		}
@@ -214,10 +204,8 @@ func adminHandler(w http.ResponseWriter, r *http.Request) {
 	case "add_admin":
 		{
 			account := r.FormValue("account")
-			levelStr := r.FormValue("level")
-
-			level, err := strconv.Atoi(levelStr)
-			if err != nil {
+			level := getFormValueInt(r, "level", 0)
+			if 0 == level {
 				level = 1
 			}
 
@@ -231,22 +219,11 @@ func adminHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			evt := &MThreadMsg{}
-			evt.Event = kMThreadMsg_AddAdmin
-			evt.Msg = account
-			evt.WParam = level
-			evt.RetChan = make(chan bool, 1)
-			PostMThreadMsg(evt)
-			evtRet, timeout := WaitMThreadMsg(evt, 500)
-
-			if timeout {
-				rsp.Msg = "Request timeout"
+			ret := dbInsertAdminAccount(g_DBUser, account, level)
+			if ret {
+				rsp.Msg = "Add admin account success"
 			} else {
-				if evtRet {
-					rsp.Msg = "Add admin account success"
-				} else {
-					rsp.Msg = "Add admin account failed"
-				}
+				rsp.Msg = "Add admin account failed"
 			}
 		}
 	case "del_admin":
@@ -262,21 +239,11 @@ func adminHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			evt := &MThreadMsg{}
-			evt.Event = kMThreadMsg_DelAdmin
-			evt.Msg = account
-			evt.RetChan = make(chan bool, 1)
-			PostMThreadMsg(evt)
-			evtRet, timeout := WaitMThreadMsg(evt, 500)
-
-			if timeout {
-				rsp.Msg = "Request timeout"
+			ret := dbRemoveAdminAccount(g_DBUser, account)
+			if ret {
+				rsp.Msg = "Del admin account success"
 			} else {
-				if evtRet {
-					rsp.Msg = "Del admin account success"
-				} else {
-					rsp.Msg = "Del admin account failed"
-				}
+				rsp.Msg = "Del admin account failed"
 			}
 		}
 	case "enableolroom":

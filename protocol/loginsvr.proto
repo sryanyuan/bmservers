@@ -9,17 +9,38 @@ enum LSOp {
 	CheckCanBuyOlshopItemReq = 11004;
 	CheckCanBuyOlshopItemRsp = 11005;
 	SavePlayerExtDataReq = 11006;
-	//	C<->S
+	PlayerLoginHumDataNtf = 11007;
+	PlayerLoginExtHumDataNtf = 11008;
+	SyncPlayerRankNtf = 11009;
+	RegisterServerRsp = 11010;
+	//	C<->LS
 	LSAccessNtf = 11100;
 	VerifyAccountReq = 11101;
 	QuickMessageNtf = 11102;
 	ServerListNtf = 11103;
 	VerifyAccountRsp = 11104;
+	PlayerHumBaseDataNtf = 11105;
+	CreateHumReq = 11106;
+	DelHumReq = 11107;
+	LoginGameReq = 11108;
+	CreateHumRsp = 11109;
+	DelHumRsp = 11110;
+	HeartBeatNtf = 11111;
+	//	C<->GS
+	RegisterClientReq = 11200;
+	RegisterClientRsp = 11201;
 }
 
+//	S<->S
 message MRegisterServerReq {
 	required string ServerName = 1;
 	required string exposeAddress = 2;
+	required int32 ServerID = 3;
+}
+
+message MRegisterServerRsp {
+	required int32 Result = 1;
+	optional string RPCAddress = 2;
 }
 
 message MSavePlayerDataReq {
@@ -28,6 +49,7 @@ message MSavePlayerDataReq {
 	required uint32 UID = 3;
 	required uint32 Level = 4;
 	required bytes Data = 5;
+	required int32 ServerID = 6;
 }
 
 message MUserInternalVerifyReq {
@@ -43,6 +65,7 @@ message MUpdatePlayerRankReq {
 	required uint32 Level = 3;
 	required uint32 Job = 4;
 	required uint32 Power = 5;
+	required int32 ServerID = 6;
 }
 
 message MCheckCanBuyOlshopItemReq {
@@ -67,11 +90,39 @@ message MSavePlayerExtDataReq {
 	required uint32 UID = 3;
 	required uint32 ExtIndex = 4;
 	required bytes Data = 5;
+	required int32 ServerID = 6;
 }
 
+message MPlayerLoginHumDataNtf {
+	required int32 GID = 1;
+	required int32 ConnID = 2;
+	required int32 LID = 3;
+	required uint32 UID = 4;
+	required string Name = 5;
+	required int32 Sex = 6;
+	required int32 Job = 7;
+	required int32 Level = 8;
+	optional bytes Data = 9;
+	optional string JsonData = 10;
+}
+
+message MPlayerLoginExtHumDataNtf {
+	required int32 GID = 1;
+	required int32 ConnID = 2;
+	required uint32 UID = 3;
+	required int32 ExtIndex = 4;
+	optional bytes Data = 5;
+}
+
+message MSyncPlayerRankNtf {
+	optional string Data = 1;
+}
+
+//	C<->LS
 message MLSAccessNtf {
 	required int32 LID = 1;
 	required string AccessToken = 2;
+	required int32 GameType = 3;
 }
 
 message MVerifyAccountReq {
@@ -87,6 +138,7 @@ message MQuickMessageNtf {
 message MServerListItem {
 	required string ServerName = 1;
 	required string ServerAddress = 2;
+	required int32 ServerID = 3;
 }
 
 message MServerListNtf {
@@ -95,4 +147,39 @@ message MServerListNtf {
 
 message MVerifyAccountRsp {
 	required int32 Result = 1;
+}
+
+message MPlayerHumBaseData {
+	required int32 RoleIndex = 1;
+	required bytes RoleData = 2;
+}
+
+message MPlayerHumBaseDataNtf {
+	repeated MPlayerHumBaseData Roles = 1; 
+}
+
+message MCreateHumReq {
+	required string Name = 1;
+	required int32 Job = 2;
+	required int32 Sex = 3;
+}
+
+message MDelHumReq {
+	required string Name = 1;
+}
+
+message MLoginGameReq {
+	required string Name = 1;
+	required string ServerName = 2;
+}
+
+message MCreateHumRsp {
+	required string Name = 1;
+	required int32 Job = 2;
+	required int32 Sex = 3;
+	required int32 Result = 4;
+}
+
+message MDelHumRsp {
+	required string Name = 1;
 }

@@ -16,12 +16,22 @@ It has these top-level messages:
 	MCheckCanBuyOlshopItemReq
 	MCheckCanBuyOlshopItemRsp
 	MSavePlayerExtDataReq
+	MPlayerLoginHumDataNtf
+	MPlayerLoginExtHumDataNtf
+	MSyncPlayerRankNtf
 	MLSAccessNtf
 	MVerifyAccountReq
 	MQuickMessageNtf
 	MServerListItem
 	MServerListNtf
 	MVerifyAccountRsp
+	MPlayerHumBaseData
+	MPlayerHumBaseDataNtf
+	MCreateHumReq
+	MDelHumReq
+	MLoginGameReq
+	MCreateHumRsp
+	MDelHumRsp
 */
 package protocol
 
@@ -51,12 +61,25 @@ const (
 	LSOp_CheckCanBuyOlshopItemReq LSOp = 11004
 	LSOp_CheckCanBuyOlshopItemRsp LSOp = 11005
 	LSOp_SavePlayerExtDataReq     LSOp = 11006
-	// 	C<->S
-	LSOp_LSAccessNtf      LSOp = 11100
-	LSOp_VerifyAccountReq LSOp = 11101
-	LSOp_QuickMessageNtf  LSOp = 11102
-	LSOp_ServerListNtf    LSOp = 11103
-	LSOp_VerifyAccountRsp LSOp = 11104
+	LSOp_PlayerLoginHumDataNtf    LSOp = 11007
+	LSOp_PlayerLoginExtHumDataNtf LSOp = 11008
+	LSOp_SyncPlayerRankNtf        LSOp = 11009
+	// 	C<->LS
+	LSOp_LSAccessNtf          LSOp = 11100
+	LSOp_VerifyAccountReq     LSOp = 11101
+	LSOp_QuickMessageNtf      LSOp = 11102
+	LSOp_ServerListNtf        LSOp = 11103
+	LSOp_VerifyAccountRsp     LSOp = 11104
+	LSOp_PlayerHumBaseDataNtf LSOp = 11105
+	LSOp_CreateHumReq         LSOp = 11106
+	LSOp_DelHumReq            LSOp = 11107
+	LSOp_LoginGameReq         LSOp = 11108
+	LSOp_CreateHumRsp         LSOp = 11109
+	LSOp_DelHumRsp            LSOp = 11110
+	LSOp_HeartBeatNtf         LSOp = 11111
+	// 	C<->GS
+	LSOp_RegisterClientReq LSOp = 11200
+	LSOp_RegisterClientRsp LSOp = 11201
 )
 
 var LSOp_name = map[int32]string{
@@ -67,11 +90,23 @@ var LSOp_name = map[int32]string{
 	11004: "CheckCanBuyOlshopItemReq",
 	11005: "CheckCanBuyOlshopItemRsp",
 	11006: "SavePlayerExtDataReq",
+	11007: "PlayerLoginHumDataNtf",
+	11008: "PlayerLoginExtHumDataNtf",
+	11009: "SyncPlayerRankNtf",
 	11100: "LSAccessNtf",
 	11101: "VerifyAccountReq",
 	11102: "QuickMessageNtf",
 	11103: "ServerListNtf",
 	11104: "VerifyAccountRsp",
+	11105: "PlayerHumBaseDataNtf",
+	11106: "CreateHumReq",
+	11107: "DelHumReq",
+	11108: "LoginGameReq",
+	11109: "CreateHumRsp",
+	11110: "DelHumRsp",
+	11111: "HeartBeatNtf",
+	11200: "RegisterClientReq",
+	11201: "RegisterClientRsp",
 }
 var LSOp_value = map[string]int32{
 	"RegisterServerReq":        11000,
@@ -81,11 +116,23 @@ var LSOp_value = map[string]int32{
 	"CheckCanBuyOlshopItemReq": 11004,
 	"CheckCanBuyOlshopItemRsp": 11005,
 	"SavePlayerExtDataReq":     11006,
+	"PlayerLoginHumDataNtf":    11007,
+	"PlayerLoginExtHumDataNtf": 11008,
+	"SyncPlayerRankNtf":        11009,
 	"LSAccessNtf":              11100,
 	"VerifyAccountReq":         11101,
 	"QuickMessageNtf":          11102,
 	"ServerListNtf":            11103,
 	"VerifyAccountRsp":         11104,
+	"PlayerHumBaseDataNtf":     11105,
+	"CreateHumReq":             11106,
+	"DelHumReq":                11107,
+	"LoginGameReq":             11108,
+	"CreateHumRsp":             11109,
+	"DelHumRsp":                11110,
+	"HeartBeatNtf":             11111,
+	"RegisterClientReq":        11200,
+	"RegisterClientRsp":        11201,
 }
 
 func (x LSOp) Enum() *LSOp {
@@ -106,9 +153,11 @@ func (x *LSOp) UnmarshalJSON(data []byte) error {
 }
 func (LSOp) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+// 	S<->S
 type MRegisterServerReq struct {
 	ServerName       *string `protobuf:"bytes,1,req,name=ServerName" json:"ServerName,omitempty"`
 	ExposeAddress    *string `protobuf:"bytes,2,req,name=exposeAddress" json:"exposeAddress,omitempty"`
+	ServerID         *int32  `protobuf:"varint,3,req,name=ServerID" json:"ServerID,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
@@ -131,12 +180,20 @@ func (m *MRegisterServerReq) GetExposeAddress() string {
 	return ""
 }
 
+func (m *MRegisterServerReq) GetServerID() int32 {
+	if m != nil && m.ServerID != nil {
+		return *m.ServerID
+	}
+	return 0
+}
+
 type MSavePlayerDataReq struct {
 	LID              *int32  `protobuf:"varint,1,req,name=LID" json:"LID,omitempty"`
 	Name             *string `protobuf:"bytes,2,req,name=Name" json:"Name,omitempty"`
 	UID              *uint32 `protobuf:"varint,3,req,name=UID" json:"UID,omitempty"`
 	Level            *uint32 `protobuf:"varint,4,req,name=Level" json:"Level,omitempty"`
 	Data             []byte  `protobuf:"bytes,5,req,name=Data" json:"Data,omitempty"`
+	ServerID         *int32  `protobuf:"varint,6,req,name=ServerID" json:"ServerID,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
@@ -178,6 +235,13 @@ func (m *MSavePlayerDataReq) GetData() []byte {
 		return m.Data
 	}
 	return nil
+}
+
+func (m *MSavePlayerDataReq) GetServerID() int32 {
+	if m != nil && m.ServerID != nil {
+		return *m.ServerID
+	}
+	return 0
 }
 
 type MUserInternalVerifyReq struct {
@@ -227,6 +291,7 @@ type MUpdatePlayerRankReq struct {
 	Level            *uint32 `protobuf:"varint,3,req,name=Level" json:"Level,omitempty"`
 	Job              *uint32 `protobuf:"varint,4,req,name=Job" json:"Job,omitempty"`
 	Power            *uint32 `protobuf:"varint,5,req,name=Power" json:"Power,omitempty"`
+	ServerID         *int32  `protobuf:"varint,6,req,name=ServerID" json:"ServerID,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
@@ -266,6 +331,13 @@ func (m *MUpdatePlayerRankReq) GetJob() uint32 {
 func (m *MUpdatePlayerRankReq) GetPower() uint32 {
 	if m != nil && m.Power != nil {
 		return *m.Power
+	}
+	return 0
+}
+
+func (m *MUpdatePlayerRankReq) GetServerID() int32 {
+	if m != nil && m.ServerID != nil {
+		return *m.ServerID
 	}
 	return 0
 }
@@ -374,6 +446,7 @@ type MSavePlayerExtDataReq struct {
 	UID              *uint32 `protobuf:"varint,3,req,name=UID" json:"UID,omitempty"`
 	ExtIndex         *uint32 `protobuf:"varint,4,req,name=ExtIndex" json:"ExtIndex,omitempty"`
 	Data             []byte  `protobuf:"bytes,5,req,name=Data" json:"Data,omitempty"`
+	ServerID         *int32  `protobuf:"varint,6,req,name=ServerID" json:"ServerID,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
@@ -417,16 +490,180 @@ func (m *MSavePlayerExtDataReq) GetData() []byte {
 	return nil
 }
 
+func (m *MSavePlayerExtDataReq) GetServerID() int32 {
+	if m != nil && m.ServerID != nil {
+		return *m.ServerID
+	}
+	return 0
+}
+
+type MPlayerLoginHumDataNtf struct {
+	GID              *int32  `protobuf:"varint,1,req,name=GID" json:"GID,omitempty"`
+	ConnID           *int32  `protobuf:"varint,2,req,name=ConnID" json:"ConnID,omitempty"`
+	LID              *int32  `protobuf:"varint,3,req,name=LID" json:"LID,omitempty"`
+	UID              *uint32 `protobuf:"varint,4,req,name=UID" json:"UID,omitempty"`
+	Name             *string `protobuf:"bytes,5,req,name=Name" json:"Name,omitempty"`
+	Sex              *int32  `protobuf:"varint,6,req,name=Sex" json:"Sex,omitempty"`
+	Job              *int32  `protobuf:"varint,7,req,name=Job" json:"Job,omitempty"`
+	Level            *int32  `protobuf:"varint,8,req,name=Level" json:"Level,omitempty"`
+	Data             []byte  `protobuf:"bytes,9,opt,name=Data" json:"Data,omitempty"`
+	JsonData         *string `protobuf:"bytes,10,opt,name=JsonData" json:"JsonData,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *MPlayerLoginHumDataNtf) Reset()                    { *m = MPlayerLoginHumDataNtf{} }
+func (m *MPlayerLoginHumDataNtf) String() string            { return proto.CompactTextString(m) }
+func (*MPlayerLoginHumDataNtf) ProtoMessage()               {}
+func (*MPlayerLoginHumDataNtf) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+
+func (m *MPlayerLoginHumDataNtf) GetGID() int32 {
+	if m != nil && m.GID != nil {
+		return *m.GID
+	}
+	return 0
+}
+
+func (m *MPlayerLoginHumDataNtf) GetConnID() int32 {
+	if m != nil && m.ConnID != nil {
+		return *m.ConnID
+	}
+	return 0
+}
+
+func (m *MPlayerLoginHumDataNtf) GetLID() int32 {
+	if m != nil && m.LID != nil {
+		return *m.LID
+	}
+	return 0
+}
+
+func (m *MPlayerLoginHumDataNtf) GetUID() uint32 {
+	if m != nil && m.UID != nil {
+		return *m.UID
+	}
+	return 0
+}
+
+func (m *MPlayerLoginHumDataNtf) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
+func (m *MPlayerLoginHumDataNtf) GetSex() int32 {
+	if m != nil && m.Sex != nil {
+		return *m.Sex
+	}
+	return 0
+}
+
+func (m *MPlayerLoginHumDataNtf) GetJob() int32 {
+	if m != nil && m.Job != nil {
+		return *m.Job
+	}
+	return 0
+}
+
+func (m *MPlayerLoginHumDataNtf) GetLevel() int32 {
+	if m != nil && m.Level != nil {
+		return *m.Level
+	}
+	return 0
+}
+
+func (m *MPlayerLoginHumDataNtf) GetData() []byte {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+func (m *MPlayerLoginHumDataNtf) GetJsonData() string {
+	if m != nil && m.JsonData != nil {
+		return *m.JsonData
+	}
+	return ""
+}
+
+type MPlayerLoginExtHumDataNtf struct {
+	GID              *int32  `protobuf:"varint,1,req,name=GID" json:"GID,omitempty"`
+	ConnID           *int32  `protobuf:"varint,2,req,name=ConnID" json:"ConnID,omitempty"`
+	UID              *uint32 `protobuf:"varint,3,req,name=UID" json:"UID,omitempty"`
+	ExtIndex         *int32  `protobuf:"varint,4,req,name=ExtIndex" json:"ExtIndex,omitempty"`
+	Data             []byte  `protobuf:"bytes,5,opt,name=Data" json:"Data,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *MPlayerLoginExtHumDataNtf) Reset()                    { *m = MPlayerLoginExtHumDataNtf{} }
+func (m *MPlayerLoginExtHumDataNtf) String() string            { return proto.CompactTextString(m) }
+func (*MPlayerLoginExtHumDataNtf) ProtoMessage()               {}
+func (*MPlayerLoginExtHumDataNtf) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+
+func (m *MPlayerLoginExtHumDataNtf) GetGID() int32 {
+	if m != nil && m.GID != nil {
+		return *m.GID
+	}
+	return 0
+}
+
+func (m *MPlayerLoginExtHumDataNtf) GetConnID() int32 {
+	if m != nil && m.ConnID != nil {
+		return *m.ConnID
+	}
+	return 0
+}
+
+func (m *MPlayerLoginExtHumDataNtf) GetUID() uint32 {
+	if m != nil && m.UID != nil {
+		return *m.UID
+	}
+	return 0
+}
+
+func (m *MPlayerLoginExtHumDataNtf) GetExtIndex() int32 {
+	if m != nil && m.ExtIndex != nil {
+		return *m.ExtIndex
+	}
+	return 0
+}
+
+func (m *MPlayerLoginExtHumDataNtf) GetData() []byte {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+type MSyncPlayerRankNtf struct {
+	Data             *string `protobuf:"bytes,1,opt,name=Data" json:"Data,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *MSyncPlayerRankNtf) Reset()                    { *m = MSyncPlayerRankNtf{} }
+func (m *MSyncPlayerRankNtf) String() string            { return proto.CompactTextString(m) }
+func (*MSyncPlayerRankNtf) ProtoMessage()               {}
+func (*MSyncPlayerRankNtf) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+
+func (m *MSyncPlayerRankNtf) GetData() string {
+	if m != nil && m.Data != nil {
+		return *m.Data
+	}
+	return ""
+}
+
+// 	C<->LS
 type MLSAccessNtf struct {
 	LID              *int32  `protobuf:"varint,1,req,name=LID" json:"LID,omitempty"`
 	AccessToken      *string `protobuf:"bytes,2,req,name=AccessToken" json:"AccessToken,omitempty"`
+	GameType         *int32  `protobuf:"varint,3,req,name=GameType" json:"GameType,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
 func (m *MLSAccessNtf) Reset()                    { *m = MLSAccessNtf{} }
 func (m *MLSAccessNtf) String() string            { return proto.CompactTextString(m) }
 func (*MLSAccessNtf) ProtoMessage()               {}
-func (*MLSAccessNtf) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+func (*MLSAccessNtf) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
 
 func (m *MLSAccessNtf) GetLID() int32 {
 	if m != nil && m.LID != nil {
@@ -442,6 +679,13 @@ func (m *MLSAccessNtf) GetAccessToken() string {
 	return ""
 }
 
+func (m *MLSAccessNtf) GetGameType() int32 {
+	if m != nil && m.GameType != nil {
+		return *m.GameType
+	}
+	return 0
+}
+
 type MVerifyAccountReq struct {
 	Account          *string `protobuf:"bytes,1,req,name=Account" json:"Account,omitempty"`
 	Password         *string `protobuf:"bytes,2,req,name=Password" json:"Password,omitempty"`
@@ -451,7 +695,7 @@ type MVerifyAccountReq struct {
 func (m *MVerifyAccountReq) Reset()                    { *m = MVerifyAccountReq{} }
 func (m *MVerifyAccountReq) String() string            { return proto.CompactTextString(m) }
 func (*MVerifyAccountReq) ProtoMessage()               {}
-func (*MVerifyAccountReq) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+func (*MVerifyAccountReq) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
 
 func (m *MVerifyAccountReq) GetAccount() string {
 	if m != nil && m.Account != nil {
@@ -476,7 +720,7 @@ type MQuickMessageNtf struct {
 func (m *MQuickMessageNtf) Reset()                    { *m = MQuickMessageNtf{} }
 func (m *MQuickMessageNtf) String() string            { return proto.CompactTextString(m) }
 func (*MQuickMessageNtf) ProtoMessage()               {}
-func (*MQuickMessageNtf) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+func (*MQuickMessageNtf) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
 
 func (m *MQuickMessageNtf) GetMsgId() int32 {
 	if m != nil && m.MsgId != nil {
@@ -495,13 +739,14 @@ func (m *MQuickMessageNtf) GetParam() int32 {
 type MServerListItem struct {
 	ServerName       *string `protobuf:"bytes,1,req,name=ServerName" json:"ServerName,omitempty"`
 	ServerAddress    *string `protobuf:"bytes,2,req,name=ServerAddress" json:"ServerAddress,omitempty"`
+	ServerID         *int32  `protobuf:"varint,3,req,name=ServerID" json:"ServerID,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
 func (m *MServerListItem) Reset()                    { *m = MServerListItem{} }
 func (m *MServerListItem) String() string            { return proto.CompactTextString(m) }
 func (*MServerListItem) ProtoMessage()               {}
-func (*MServerListItem) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
+func (*MServerListItem) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
 
 func (m *MServerListItem) GetServerName() string {
 	if m != nil && m.ServerName != nil {
@@ -517,6 +762,13 @@ func (m *MServerListItem) GetServerAddress() string {
 	return ""
 }
 
+func (m *MServerListItem) GetServerID() int32 {
+	if m != nil && m.ServerID != nil {
+		return *m.ServerID
+	}
+	return 0
+}
+
 type MServerListNtf struct {
 	Servers          []*MServerListItem `protobuf:"bytes,1,rep,name=Servers" json:"Servers,omitempty"`
 	XXX_unrecognized []byte             `json:"-"`
@@ -525,7 +777,7 @@ type MServerListNtf struct {
 func (m *MServerListNtf) Reset()                    { *m = MServerListNtf{} }
 func (m *MServerListNtf) String() string            { return proto.CompactTextString(m) }
 func (*MServerListNtf) ProtoMessage()               {}
-func (*MServerListNtf) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
+func (*MServerListNtf) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{14} }
 
 func (m *MServerListNtf) GetServers() []*MServerListItem {
 	if m != nil {
@@ -542,13 +794,188 @@ type MVerifyAccountRsp struct {
 func (m *MVerifyAccountRsp) Reset()                    { *m = MVerifyAccountRsp{} }
 func (m *MVerifyAccountRsp) String() string            { return proto.CompactTextString(m) }
 func (*MVerifyAccountRsp) ProtoMessage()               {}
-func (*MVerifyAccountRsp) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
+func (*MVerifyAccountRsp) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{15} }
 
 func (m *MVerifyAccountRsp) GetResult() int32 {
 	if m != nil && m.Result != nil {
 		return *m.Result
 	}
 	return 0
+}
+
+type MPlayerHumBaseData struct {
+	RoleIndex        *int32 `protobuf:"varint,1,req,name=RoleIndex" json:"RoleIndex,omitempty"`
+	RoleData         []byte `protobuf:"bytes,2,req,name=RoleData" json:"RoleData,omitempty"`
+	XXX_unrecognized []byte `json:"-"`
+}
+
+func (m *MPlayerHumBaseData) Reset()                    { *m = MPlayerHumBaseData{} }
+func (m *MPlayerHumBaseData) String() string            { return proto.CompactTextString(m) }
+func (*MPlayerHumBaseData) ProtoMessage()               {}
+func (*MPlayerHumBaseData) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{16} }
+
+func (m *MPlayerHumBaseData) GetRoleIndex() int32 {
+	if m != nil && m.RoleIndex != nil {
+		return *m.RoleIndex
+	}
+	return 0
+}
+
+func (m *MPlayerHumBaseData) GetRoleData() []byte {
+	if m != nil {
+		return m.RoleData
+	}
+	return nil
+}
+
+type MPlayerHumBaseDataNtf struct {
+	Roles            []*MPlayerHumBaseData `protobuf:"bytes,1,rep,name=Roles" json:"Roles,omitempty"`
+	XXX_unrecognized []byte                `json:"-"`
+}
+
+func (m *MPlayerHumBaseDataNtf) Reset()                    { *m = MPlayerHumBaseDataNtf{} }
+func (m *MPlayerHumBaseDataNtf) String() string            { return proto.CompactTextString(m) }
+func (*MPlayerHumBaseDataNtf) ProtoMessage()               {}
+func (*MPlayerHumBaseDataNtf) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{17} }
+
+func (m *MPlayerHumBaseDataNtf) GetRoles() []*MPlayerHumBaseData {
+	if m != nil {
+		return m.Roles
+	}
+	return nil
+}
+
+type MCreateHumReq struct {
+	Name             *string `protobuf:"bytes,1,req,name=Name" json:"Name,omitempty"`
+	Job              *int32  `protobuf:"varint,2,req,name=Job" json:"Job,omitempty"`
+	Sex              *int32  `protobuf:"varint,3,req,name=Sex" json:"Sex,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *MCreateHumReq) Reset()                    { *m = MCreateHumReq{} }
+func (m *MCreateHumReq) String() string            { return proto.CompactTextString(m) }
+func (*MCreateHumReq) ProtoMessage()               {}
+func (*MCreateHumReq) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{18} }
+
+func (m *MCreateHumReq) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
+func (m *MCreateHumReq) GetJob() int32 {
+	if m != nil && m.Job != nil {
+		return *m.Job
+	}
+	return 0
+}
+
+func (m *MCreateHumReq) GetSex() int32 {
+	if m != nil && m.Sex != nil {
+		return *m.Sex
+	}
+	return 0
+}
+
+type MDelHumReq struct {
+	Name             *string `protobuf:"bytes,1,req,name=Name" json:"Name,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *MDelHumReq) Reset()                    { *m = MDelHumReq{} }
+func (m *MDelHumReq) String() string            { return proto.CompactTextString(m) }
+func (*MDelHumReq) ProtoMessage()               {}
+func (*MDelHumReq) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{19} }
+
+func (m *MDelHumReq) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
+type MLoginGameReq struct {
+	Name             *string `protobuf:"bytes,1,req,name=Name" json:"Name,omitempty"`
+	ServerName       *string `protobuf:"bytes,2,req,name=ServerName" json:"ServerName,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *MLoginGameReq) Reset()                    { *m = MLoginGameReq{} }
+func (m *MLoginGameReq) String() string            { return proto.CompactTextString(m) }
+func (*MLoginGameReq) ProtoMessage()               {}
+func (*MLoginGameReq) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{20} }
+
+func (m *MLoginGameReq) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
+func (m *MLoginGameReq) GetServerName() string {
+	if m != nil && m.ServerName != nil {
+		return *m.ServerName
+	}
+	return ""
+}
+
+type MCreateHumRsp struct {
+	Name             *string `protobuf:"bytes,1,req,name=Name" json:"Name,omitempty"`
+	Job              *int32  `protobuf:"varint,2,req,name=Job" json:"Job,omitempty"`
+	Sex              *int32  `protobuf:"varint,3,req,name=Sex" json:"Sex,omitempty"`
+	Result           *int32  `protobuf:"varint,4,req,name=Result" json:"Result,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *MCreateHumRsp) Reset()                    { *m = MCreateHumRsp{} }
+func (m *MCreateHumRsp) String() string            { return proto.CompactTextString(m) }
+func (*MCreateHumRsp) ProtoMessage()               {}
+func (*MCreateHumRsp) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{21} }
+
+func (m *MCreateHumRsp) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
+func (m *MCreateHumRsp) GetJob() int32 {
+	if m != nil && m.Job != nil {
+		return *m.Job
+	}
+	return 0
+}
+
+func (m *MCreateHumRsp) GetSex() int32 {
+	if m != nil && m.Sex != nil {
+		return *m.Sex
+	}
+	return 0
+}
+
+func (m *MCreateHumRsp) GetResult() int32 {
+	if m != nil && m.Result != nil {
+		return *m.Result
+	}
+	return 0
+}
+
+type MDelHumRsp struct {
+	Name             *string `protobuf:"bytes,1,req,name=Name" json:"Name,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *MDelHumRsp) Reset()                    { *m = MDelHumRsp{} }
+func (m *MDelHumRsp) String() string            { return proto.CompactTextString(m) }
+func (*MDelHumRsp) ProtoMessage()               {}
+func (*MDelHumRsp) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{22} }
+
+func (m *MDelHumRsp) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
 }
 
 func init() {
@@ -559,55 +986,86 @@ func init() {
 	proto.RegisterType((*MCheckCanBuyOlshopItemReq)(nil), "protocol.MCheckCanBuyOlshopItemReq")
 	proto.RegisterType((*MCheckCanBuyOlshopItemRsp)(nil), "protocol.MCheckCanBuyOlshopItemRsp")
 	proto.RegisterType((*MSavePlayerExtDataReq)(nil), "protocol.MSavePlayerExtDataReq")
+	proto.RegisterType((*MPlayerLoginHumDataNtf)(nil), "protocol.MPlayerLoginHumDataNtf")
+	proto.RegisterType((*MPlayerLoginExtHumDataNtf)(nil), "protocol.MPlayerLoginExtHumDataNtf")
+	proto.RegisterType((*MSyncPlayerRankNtf)(nil), "protocol.MSyncPlayerRankNtf")
 	proto.RegisterType((*MLSAccessNtf)(nil), "protocol.MLSAccessNtf")
 	proto.RegisterType((*MVerifyAccountReq)(nil), "protocol.MVerifyAccountReq")
 	proto.RegisterType((*MQuickMessageNtf)(nil), "protocol.MQuickMessageNtf")
 	proto.RegisterType((*MServerListItem)(nil), "protocol.MServerListItem")
 	proto.RegisterType((*MServerListNtf)(nil), "protocol.MServerListNtf")
 	proto.RegisterType((*MVerifyAccountRsp)(nil), "protocol.MVerifyAccountRsp")
+	proto.RegisterType((*MPlayerHumBaseData)(nil), "protocol.MPlayerHumBaseData")
+	proto.RegisterType((*MPlayerHumBaseDataNtf)(nil), "protocol.MPlayerHumBaseDataNtf")
+	proto.RegisterType((*MCreateHumReq)(nil), "protocol.MCreateHumReq")
+	proto.RegisterType((*MDelHumReq)(nil), "protocol.MDelHumReq")
+	proto.RegisterType((*MLoginGameReq)(nil), "protocol.MLoginGameReq")
+	proto.RegisterType((*MCreateHumRsp)(nil), "protocol.MCreateHumRsp")
+	proto.RegisterType((*MDelHumRsp)(nil), "protocol.MDelHumRsp")
 	proto.RegisterEnum("protocol.LSOp", LSOp_name, LSOp_value)
 }
 
 func init() { proto.RegisterFile("loginsvr.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 597 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x94, 0x53, 0xdb, 0x6e, 0xd3, 0x40,
-	0x10, 0x15, 0x49, 0x43, 0xcb, 0xa4, 0x6e, 0xb7, 0xdb, 0x8b, 0x5c, 0x24, 0x24, 0x64, 0x5e, 0xaa,
-	0x3e, 0x54, 0x15, 0x0f, 0x3c, 0x55, 0x42, 0x25, 0x45, 0x28, 0x28, 0xee, 0x25, 0xc1, 0x91, 0x90,
-	0x90, 0xd0, 0x12, 0x4f, 0xd3, 0x28, 0xae, 0xd7, 0xec, 0x3a, 0x69, 0xf3, 0x55, 0xfc, 0x10, 0xb7,
-	0xcf, 0xe0, 0x2e, 0x66, 0xed, 0x05, 0xd2, 0xd8, 0x05, 0xf1, 0x64, 0xcd, 0x8e, 0xe7, 0x9c, 0xb3,
-	0x7b, 0xe6, 0xc0, 0x52, 0x24, 0xfb, 0x83, 0x58, 0x8f, 0xd5, 0x4e, 0xa2, 0x64, 0x2a, 0xf9, 0x42,
-	0xf6, 0xe9, 0xc9, 0xc8, 0x7b, 0x08, 0xdc, 0x6f, 0x63, 0x7f, 0xa0, 0x53, 0x54, 0x1d, 0x54, 0x63,
-	0x54, 0x6d, 0x7c, 0xcd, 0x39, 0x40, 0x5e, 0x1c, 0x8a, 0x73, 0x74, 0x6f, 0xdc, 0xad, 0x6c, 0xdd,
-	0xe2, 0xeb, 0xe0, 0xe0, 0x65, 0x22, 0x35, 0xee, 0x87, 0xa1, 0x42, 0xad, 0xdd, 0x8a, 0x39, 0xf6,
-	0x9e, 0x13, 0x40, 0x47, 0x8c, 0xf1, 0x38, 0x12, 0x13, 0x54, 0x07, 0x22, 0x15, 0x06, 0xa0, 0x0e,
-	0xd5, 0x56, 0xf3, 0x20, 0x9b, 0xac, 0xf1, 0x45, 0x98, 0xcb, 0x70, 0xb2, 0x01, 0xd3, 0x0a, 0xa8,
-	0x55, 0xa5, 0xc2, 0xe1, 0x0e, 0xd4, 0x5a, 0x38, 0xc6, 0xc8, 0x9d, 0xcb, 0x4a, 0xfa, 0xd3, 0x20,
-	0xb8, 0x35, 0xaa, 0x16, 0x09, 0x7a, 0xc3, 0x0f, 0x34, 0xaa, 0x66, 0x4c, 0xe2, 0x62, 0x11, 0x75,
-	0x51, 0x0d, 0x4e, 0x27, 0x05, 0xf8, 0x55, 0xa8, 0xef, 0xf7, 0x7a, 0xa4, 0xe8, 0x99, 0x1c, 0x62,
-	0xfc, 0x87, 0xe5, 0x89, 0x65, 0xa9, 0x71, 0x06, 0x0b, 0x0d, 0x19, 0xc7, 0x0d, 0x19, 0x62, 0x46,
-	0x54, 0xf3, 0x5e, 0xc0, 0x9a, 0x1f, 0x24, 0xa1, 0x48, 0xad, 0xee, 0xb6, 0x88, 0x87, 0x16, 0x38,
-	0xb0, 0xc0, 0xce, 0x8c, 0xee, 0xdf, 0x52, 0x73, 0xe5, 0xf4, 0xe7, 0x53, 0xf9, 0xca, 0xea, 0xa6,
-	0xde, 0xb1, 0xbc, 0x40, 0x95, 0x09, 0x77, 0xbc, 0x10, 0x36, 0xfd, 0xc6, 0x19, 0xf6, 0x86, 0x0d,
-	0x11, 0x3f, 0x1a, 0x4d, 0x8e, 0x22, 0x7d, 0x26, 0x93, 0x66, 0x8a, 0xe7, 0x05, 0x0a, 0x2b, 0xb3,
-	0x92, 0x15, 0xcb, 0x30, 0x7f, 0x32, 0x42, 0x35, 0x69, 0x86, 0x96, 0x83, 0x04, 0x34, 0xa4, 0x4e,
-	0x2d, 0xc9, 0x12, 0xdc, 0x34, 0x18, 0xd4, 0xcd, 0x59, 0x4e, 0xaf, 0x65, 0xd1, 0x89, 0xf9, 0xb9,
-	0x8d, 0x7a, 0x14, 0xa5, 0xf6, 0x91, 0x2c, 0x6b, 0x65, 0x9a, 0xb5, 0x3a, 0xcb, 0x5a, 0xce, 0xf3,
-	0x12, 0xd6, 0xa7, 0x1c, 0x7e, 0x7c, 0x99, 0xfe, 0xaf, 0xc9, 0xf4, 0xfc, 0x34, 0xd5, 0x8c, 0x43,
-	0xbc, 0x2c, 0xf5, 0x79, 0x17, 0x16, 0xfd, 0x56, 0x27, 0xf7, 0xf0, 0x30, 0x3d, 0xfd, 0xb7, 0xbb,
-	0xde, 0x03, 0x58, 0xf1, 0xf3, 0x6d, 0xa0, 0x9e, 0x1c, 0xc5, 0xa9, 0x91, 0x43, 0x17, 0xb1, 0x95,
-	0xdd, 0x58, 0xe2, 0x3d, 0x16, 0x5a, 0x5f, 0x48, 0x15, 0xda, 0xb9, 0x5d, 0x60, 0xfe, 0xc9, 0x68,
-	0xd0, 0x1b, 0xfa, 0x04, 0x28, 0xfa, 0x68, 0xd8, 0xc8, 0x3b, 0x5f, 0xf7, 0xe9, 0xb6, 0x39, 0x9f,
-	0xb1, 0x52, 0x28, 0x71, 0x9e, 0x4d, 0xd4, 0xbc, 0x3d, 0x58, 0xf6, 0xf3, 0x28, 0xb4, 0x28, 0x23,
-	0xe6, 0x5d, 0xae, 0x0b, 0x47, 0x7e, 0x76, 0x35, 0x1c, 0x7b, 0xb0, 0x34, 0x35, 0x6d, 0xd8, 0xb6,
-	0x61, 0x3e, 0x3f, 0xd0, 0x34, 0x59, 0xdd, 0xaa, 0xdf, 0xdf, 0xdc, 0xf9, 0x95, 0xc5, 0x9d, 0x19,
-	0x22, 0xef, 0x5e, 0xe1, 0x96, 0x45, 0x63, 0xb7, 0xdf, 0x54, 0x60, 0xae, 0xd5, 0x39, 0x4a, 0xf8,
-	0x06, 0xac, 0x14, 0x82, 0xcc, 0x3e, 0x05, 0xe6, 0xbc, 0x90, 0x4f, 0xf6, 0x39, 0xe0, 0xb7, 0x61,
-	0xbd, 0x34, 0x5c, 0xec, 0x4b, 0xc0, 0x5d, 0x58, 0x2d, 0x49, 0x07, 0xfb, 0x1a, 0xf0, 0x3b, 0xe0,
-	0x5e, 0xb7, 0xd9, 0xec, 0xdb, 0x5f, 0xda, 0x3a, 0x61, 0xdf, 0x03, 0xbe, 0x09, 0x6b, 0x65, 0x9b,
-	0xc4, 0x7e, 0x04, 0x64, 0x56, 0x7d, 0x6a, 0x07, 0xd8, 0xdb, 0x2e, 0xbd, 0x29, 0x9b, 0xf5, 0x98,
-	0xbd, 0xeb, 0xf2, 0x35, 0x58, 0x9e, 0xb1, 0x90, 0xbd, 0xef, 0x92, 0x29, 0xce, 0x95, 0x87, 0x66,
-	0x1f, 0x4a, 0x00, 0x48, 0xc4, 0xc7, 0xee, 0xcf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x34, 0x38, 0x3b,
-	0xaf, 0x0d, 0x05, 0x00, 0x00,
+	// 931 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x94, 0x55, 0xdb, 0x6e, 0xdb, 0x46,
+	0x10, 0x85, 0x2e, 0xb4, 0xad, 0x91, 0x64, 0xaf, 0x19, 0x3b, 0x90, 0x83, 0x16, 0x08, 0xd8, 0x97,
+	0x20, 0x05, 0x8c, 0xb6, 0x0f, 0x2d, 0x0a, 0xf4, 0x25, 0x92, 0x0a, 0x47, 0x81, 0xe8, 0xc8, 0x52,
+	0xc8, 0xa0, 0x8f, 0xac, 0xb8, 0x56, 0x04, 0x51, 0x5c, 0x86, 0x4b, 0x29, 0xd6, 0x5b, 0xfb, 0x33,
+	0xfd, 0x87, 0xbe, 0xb5, 0xff, 0xd1, 0xfb, 0xf5, 0x17, 0x7a, 0x6f, 0x67, 0x77, 0x49, 0x85, 0x22,
+	0xa9, 0xc6, 0x7e, 0x12, 0x76, 0x35, 0x7b, 0xce, 0x99, 0x99, 0x33, 0x43, 0xd8, 0xf7, 0xd8, 0x64,
+	0xea, 0xf3, 0x65, 0x78, 0x1a, 0x84, 0x2c, 0x62, 0xfa, 0x9e, 0xfc, 0x19, 0x33, 0xcf, 0xb8, 0x00,
+	0xdd, 0x1c, 0xd2, 0xc9, 0x94, 0x47, 0x34, 0x1c, 0xd1, 0x70, 0x49, 0xc3, 0x21, 0x7d, 0xae, 0xeb,
+	0x00, 0xea, 0x70, 0xee, 0xcc, 0x69, 0xab, 0x74, 0xb7, 0x7c, 0xaf, 0xa6, 0x1f, 0x43, 0x93, 0x5e,
+	0x05, 0x8c, 0xd3, 0x07, 0xae, 0x1b, 0x52, 0xce, 0x5b, 0x65, 0x79, 0x4d, 0x60, 0x4f, 0x85, 0xf6,
+	0xba, 0xad, 0x0a, 0xde, 0x68, 0xc6, 0x0c, 0x21, 0x47, 0xce, 0x92, 0x0e, 0x3c, 0x67, 0x45, 0xc3,
+	0xae, 0x13, 0x39, 0x02, 0xb2, 0x0e, 0x95, 0x3e, 0x86, 0x08, 0x2c, 0x4d, 0x6f, 0x40, 0x55, 0x22,
+	0x2b, 0x08, 0xfc, 0xcb, 0x8a, 0x5f, 0x37, 0xf5, 0x26, 0x68, 0x7d, 0xba, 0xa4, 0x5e, 0xab, 0x2a,
+	0x8f, 0x18, 0x29, 0x10, 0x5a, 0x1a, 0x9e, 0x1a, 0x1b, 0x64, 0x3b, 0x92, 0xec, 0x23, 0xb8, 0x6d,
+	0x5a, 0x1c, 0x2f, 0x7c, 0x4c, 0xc0, 0x77, 0x3c, 0x9b, 0x86, 0xd3, 0xcb, 0x55, 0x8e, 0xf0, 0x16,
+	0xd4, 0x1f, 0x8c, 0xc7, 0xa8, 0xfa, 0x09, 0x9b, 0x51, 0xff, 0x25, 0xef, 0x59, 0xa2, 0x5a, 0x40,
+	0x77, 0x98, 0xef, 0x77, 0x98, 0x4b, 0x25, 0xb5, 0x66, 0xf8, 0x70, 0x64, 0x5a, 0x81, 0xeb, 0x44,
+	0x71, 0x26, 0x43, 0xc7, 0x9f, 0xc5, 0xc0, 0x56, 0x0c, 0xdc, 0xcc, 0x64, 0xb2, 0x16, 0xaf, 0x72,
+	0xc1, 0xc8, 0x47, 0xec, 0xe3, 0x38, 0x13, 0xfc, 0x6f, 0xc0, 0x5e, 0xd0, 0x50, 0xa6, 0xd2, 0x2c,
+	0x48, 0xc5, 0x85, 0x13, 0xb3, 0xf3, 0x8c, 0x8e, 0x67, 0x1d, 0xc7, 0x6f, 0x2f, 0x56, 0x8f, 0x3d,
+	0xfe, 0x8c, 0x05, 0xbd, 0x88, 0xce, 0x73, 0xa4, 0xb1, 0xf0, 0xb2, 0x3c, 0x1c, 0xc0, 0xee, 0xc5,
+	0x82, 0x86, 0xab, 0x9e, 0x1b, 0xb3, 0xa2, 0xa4, 0x0e, 0xe3, 0x51, 0x4c, 0xbb, 0x0f, 0x3b, 0x02,
+	0x03, 0xff, 0x95, 0xbc, 0xc6, 0xe5, 0x56, 0x16, 0x1e, 0x88, 0xe0, 0x21, 0xe5, 0x0b, 0x2f, 0x8a,
+	0xcb, 0x16, 0xb3, 0x96, 0xd3, 0xac, 0x95, 0x2c, 0x6b, 0x31, 0xcf, 0x73, 0x38, 0x4e, 0xb9, 0xe0,
+	0xc3, 0xab, 0xe8, 0xa6, 0x46, 0xc0, 0x02, 0xe1, 0xab, 0x9e, 0xef, 0xd2, 0xab, 0x6b, 0x7a, 0xe1,
+	0xb3, 0x12, 0x9a, 0x41, 0xf1, 0xf5, 0x85, 0xdf, 0x1f, 0x2e, 0xe6, 0x22, 0xfe, 0x3c, 0xba, 0x4c,
+	0xb4, 0x2b, 0x52, 0x94, 0x2a, 0x5a, 0x1d, 0x27, 0xa6, 0x25, 0x8a, 0x2a, 0xe9, 0x94, 0xab, 0x1b,
+	0xdd, 0xd5, 0x12, 0x79, 0x23, 0x14, 0xb3, 0x93, 0xc4, 0x89, 0xde, 0xee, 0xca, 0xc3, 0xba, 0xef,
+	0x7b, 0x49, 0x56, 0x52, 0x68, 0xed, 0x6e, 0x49, 0x09, 0x7d, 0xc4, 0x99, 0x2f, 0x6f, 0x00, 0x6f,
+	0x6a, 0x06, 0xc5, 0x1e, 0xa4, 0x74, 0x62, 0x9a, 0x37, 0x90, 0xba, 0xbd, 0x42, 0x5a, 0xaa, 0x42,
+	0x48, 0x6c, 0x18, 0x62, 0x10, 0x57, 0xfe, 0xf8, 0xa5, 0x7d, 0x05, 0x7e, 0x12, 0x53, 0x92, 0x52,
+	0xda, 0xd0, 0x30, 0xfb, 0x23, 0x35, 0x1b, 0x31, 0xfb, 0x2b, 0xa6, 0x06, 0x59, 0xcf, 0xb0, 0x26,
+	0x4f, 0x56, 0x01, 0x8d, 0x07, 0xfe, 0x5d, 0x38, 0x34, 0xd5, 0xdc, 0x61, 0x34, 0x5b, 0xf8, 0x91,
+	0x68, 0x33, 0x1a, 0x24, 0x3e, 0xc5, 0xfb, 0x03, 0xdf, 0x0d, 0x1c, 0xce, 0x5f, 0xb0, 0xd0, 0x55,
+	0x48, 0xc6, 0x5b, 0x40, 0xcc, 0x8b, 0xc5, 0x74, 0x3c, 0x33, 0x91, 0xc2, 0x99, 0x50, 0xc1, 0x8f,
+	0x95, 0x34, 0xf9, 0x04, 0x5d, 0x54, 0x4a, 0x0a, 0x3b, 0x70, 0x42, 0x67, 0xae, 0xd2, 0x37, 0xce,
+	0xe1, 0xc0, 0x54, 0x4d, 0xef, 0xe3, 0xc6, 0x12, 0x7e, 0xdb, 0xb6, 0xaa, 0xd4, 0xdd, 0xab, 0x56,
+	0xd5, 0x07, 0xb0, 0x9f, 0xc2, 0x13, 0xfc, 0xf7, 0x61, 0x57, 0x5d, 0x70, 0xc4, 0xaa, 0xdc, 0xab,
+	0xbf, 0x73, 0x72, 0x9a, 0xec, 0xca, 0xd3, 0x0c, 0xb5, 0xf1, 0x46, 0x2e, 0xef, 0xfc, 0x08, 0x19,
+	0xef, 0x63, 0x13, 0x54, 0x03, 0xb0, 0xc7, 0x6d, 0x87, 0x53, 0x51, 0x7c, 0xfd, 0x10, 0x6a, 0x43,
+	0xe6, 0x51, 0xd5, 0xbb, 0x52, 0xb2, 0x80, 0xc4, 0x95, 0xec, 0x8d, 0xd0, 0xdb, 0x30, 0xba, 0x38,
+	0x42, 0xb9, 0xa7, 0x42, 0xe4, 0x9b, 0xa0, 0x89, 0xd0, 0x44, 0xe2, 0x6b, 0x29, 0x89, 0xb9, 0x78,
+	0xe3, 0x3d, 0x68, 0x9a, 0x9d, 0x90, 0xe2, 0x1a, 0xc3, 0x5b, 0xd1, 0x99, 0xc4, 0xd4, 0xa5, 0xc4,
+	0xd4, 0xc2, 0xc7, 0x6b, 0x7b, 0x09, 0x87, 0xab, 0xe2, 0xdc, 0x01, 0x30, 0xbb, 0xd4, 0x2b, 0x7a,
+	0x65, 0xbc, 0x8d, 0xa0, 0xd2, 0xbb, 0xc2, 0x0a, 0x79, 0xd0, 0xcd, 0xa6, 0xa8, 0x6e, 0x9f, 0x6d,
+	0xe8, 0xc0, 0x4a, 0x5d, 0x53, 0x47, 0xaa, 0xa2, 0xd5, 0xac, 0xae, 0x2c, 0xca, 0xfd, 0xcf, 0xab,
+	0x50, 0xed, 0x8f, 0x1e, 0x07, 0xfa, 0x6d, 0x38, 0xcc, 0x7d, 0xd6, 0xc8, 0x6f, 0x96, 0xb8, 0xcf,
+	0x7d, 0x9b, 0xc8, 0xef, 0x96, 0x7e, 0x07, 0x8e, 0x0b, 0x3f, 0x23, 0xe4, 0x0f, 0x4b, 0x6f, 0xc1,
+	0xad, 0x82, 0xef, 0x00, 0xf9, 0xd3, 0xd2, 0x5f, 0x87, 0xd6, 0xb6, 0x8d, 0x4d, 0xfe, 0xfa, 0x9f,
+	0xbf, 0x79, 0x40, 0xfe, 0xb6, 0xf4, 0x13, 0x38, 0x2a, 0xda, 0x90, 0xe4, 0x1f, 0x29, 0xa7, 0x70,
+	0x91, 0x91, 0x7f, 0x25, 0xea, 0xb6, 0xe5, 0x41, 0x3e, 0xb1, 0x65, 0x86, 0xd9, 0xa1, 0x27, 0x9f,
+	0xda, 0xe8, 0xaf, 0x7a, 0x6a, 0xd0, 0xc9, 0x57, 0x36, 0x8e, 0x09, 0xc9, 0x8e, 0x2d, 0xf9, 0xda,
+	0xd6, 0x8f, 0xe0, 0x20, 0x33, 0x95, 0xe4, 0x1b, 0x1b, 0x5b, 0xda, 0xdc, 0x98, 0x14, 0xf2, 0x6d,
+	0x01, 0x00, 0xe6, 0xf5, 0x9d, 0x2d, 0xf2, 0x2a, 0xb2, 0x2d, 0xf9, 0xde, 0x46, 0xdf, 0x37, 0xd2,
+	0x5e, 0x24, 0x3f, 0xd8, 0xd8, 0xde, 0xda, 0xda, 0x65, 0xe4, 0x47, 0x19, 0x92, 0x76, 0x16, 0xf9,
+	0x29, 0xf3, 0x0a, 0x39, 0x7e, 0x4e, 0xbf, 0xc2, 0xf3, 0x2f, 0x32, 0xe4, 0x21, 0x75, 0xc2, 0xa8,
+	0x8d, 0x61, 0x82, 0xeb, 0x57, 0x3b, 0x6d, 0x81, 0x8e, 0x37, 0xa5, 0x2a, 0xbf, 0x2f, 0x9e, 0x16,
+	0xdc, 0x23, 0xc4, 0x97, 0x4f, 0xff, 0x0b, 0x00, 0x00, 0xff, 0xff, 0x21, 0x3a, 0x0b, 0x11, 0x25,
+	0x09, 0x00, 0x00,
 }

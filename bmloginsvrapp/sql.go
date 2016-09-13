@@ -11,18 +11,16 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sryanyuan/bmservers/shareutils"
+	"github.com/cihub/seelog"
 )
 
 func initDatabaseUser(path string) *sql.DB {
-	newdb := false
 	if !PathExist(path) {
 		file, err := os.Create(path)
 		if err != nil {
-			shareutils.LogErrorln("Can't create db file.", err)
+			seelog.Error("Can't create db file.", err)
 			return nil
 		} else {
-			newdb = true
 			file.Close()
 		}
 	}
@@ -30,169 +28,106 @@ func initDatabaseUser(path string) *sql.DB {
 	//	Connect db
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
-		shareutils.LogErrorln("Can't open db file.", err)
+		seelog.Error("Can't open db file.", err)
 		return nil
 	}
 
-	if newdb {
-		sqlexpr := `
-		create table useraccount(uid integer primary key, account varchar(20), password varchar(20), name0 varchar(20), name1 varchar(20), name2 varchar(20), online bool)
+	sqlexpr := `
+		CREATE TABLE IF NOT EXISTS useraccount (uid integer primary key, account varchar(20), password varchar(20), name0 varchar(20), name1 varchar(20), name2 varchar(20), online bool)
 		`
-		_, err = db.Exec(sqlexpr)
-		if err != nil {
-			shareutils.LogErrorln("Create new table failed.Error:", err)
-			db.Close()
-			return nil
-		}
-	} else {
-		//	reset all online state
+	_, err = db.Exec(sqlexpr)
+	if err != nil {
+		seelog.Error("Create new table failed.Error:", err)
+		db.Close()
+		return nil
 	}
 
 	//	check user donate table
-	userDonateTableExist, err := dbTableExist(db, "userdonate")
-	if err != nil {
-		shareutils.LogErrorln("failed to check userDonate table.err:", err)
-	} else {
-		if !userDonateTableExist {
-			sqlexpr := `
-		create table userdonate(uid integer primary key, donate integer, lastdonatetime integer, expiretime integer)
+	sqlexpr = `
+		CREATE TABLE IF NOT EXISTS userdonate (uid integer primary key, donate integer, lastdonatetime integer, expiretime integer)
 		`
-
-			_, err = db.Exec(sqlexpr)
-			if err != nil {
-				shareutils.LogErrorln("Create new table failed.Error:", err)
-				db.Close()
-				return nil
-			} else {
-				shareutils.LogInfoln("create a new table[userdonate]")
-			}
-		}
+	_, err = db.Exec(sqlexpr)
+	if err != nil {
+		seelog.Error("Create new table failed.Error:", err)
+		db.Close()
+		return nil
 	}
 
 	//	check user donate history table
-	userDonateHistoryTableExists, err := dbTableExist(db, "userdonatehistory")
-	if err != nil {
-		shareutils.LogErrorln("failed to check userDonateHistory table.err:", err)
-	} else {
-		if !userDonateHistoryTableExists {
-			sqlexpr := `
-			create table userdonatehistory(id integer primary key, uid integer, donate integer, donatetime integer, donateorderid varchar(50))
+	sqlexpr = `
+			CREATE TABLE IF NOT EXISTS userdonatehistory (id integer primary key, uid integer, donate integer, donatetime integer, donateorderid varchar(50))
 			`
-
-			_, err = db.Exec(sqlexpr)
-			if err != nil {
-				shareutils.LogErrorln("Create new table failed.Error:", err)
-				db.Close()
-				return nil
-			} else {
-				shareutils.LogInfoln("create a new table[userdonatehistory]")
-			}
-		}
+	_, err = db.Exec(sqlexpr)
+	if err != nil {
+		seelog.Error("Create new table failed.Error:", err)
+		db.Close()
+		return nil
 	}
 
 	//	check systemgift table
-	systemGiftTableExists, err := dbTableExist(db, "systemgift")
-	if err != nil {
-		shareutils.LogErrorln("failed to check systemgift table.err:", err)
-	} else {
-		if !systemGiftTableExists {
-			sqlexpr := `
-			create table systemgift(id integer primary key, uid integer, giftid integer, giftsum integer, givetime integer, expiretime integer)
+	sqlexpr = `
+			CREATE TABLE IF NOT EXISTS systemgift (id integer primary key, uid integer, giftid integer, giftsum integer, givetime integer, expiretime integer)
 			`
-
-			_, err = db.Exec(sqlexpr)
-			if err != nil {
-				shareutils.LogErrorln("Create new table failed.Error:", err)
-				db.Close()
-				return nil
-			} else {
-				shareutils.LogInfoln("create a new table[systemgift]")
-			}
-		}
+	_, err = db.Exec(sqlexpr)
+	if err != nil {
+		seelog.Error("Create new table failed.Error:", err)
+		db.Close()
+		return nil
 	}
 
 	//	check user donate consume
-	userDonateConsumeExists, err := dbTableExist(db, "userdonateconsume")
-	if err != nil {
-		shareutils.LogErrorln("failed to check userdonateconsume table.err:", err)
-	} else {
-		if !userDonateConsumeExists {
-			sqlexpr := `
-			create table userdonateconsume(id integer primary key, uid integer, name varchar(21), itemid integer, cost integer, buytime integer)
+	sqlexpr = `
+			CREATE TABLE IF NOT EXISTS userdonateconsume (id integer primary key, uid integer, name varchar(21), itemid integer, cost integer, buytime integer)
 			`
-
-			_, err = db.Exec(sqlexpr)
-			if err != nil {
-				shareutils.LogErrorln("Failed to create new table,err:", err)
-				db.Close()
-				return nil
-			} else {
-				shareutils.LogInfoln("Create new table[userdonateconsume]")
-			}
-		}
+	_, err = db.Exec(sqlexpr)
+	if err != nil {
+		seelog.Error("Failed to create new table,err:", err)
+		db.Close()
+		return nil
 	}
 
 	//	check player rank
-	playerRankExists, err := dbTableExist(db, "player_rank")
-	if err != nil {
-		shareutils.LogErrorln("failed to check player_rank table.err:", err)
-	} else {
-		if !playerRankExists {
-			sqlexpr := `
-			create table player_rank(id integer primary key, uid integer, name varchar(21), job integer, level integer, expr integer, power integer)
+	sqlexpr = `
+			CREATE TABLE IF NOT EXISTS player_rank (id integer primary key, uid integer, name varchar(21), job integer, level integer, expr integer, power integer)
 			`
-
-			_, err = db.Exec(sqlexpr)
-			if err != nil {
-				shareutils.LogErrorln("Failed to create new table,err:", err)
-				db.Close()
-				return nil
-			} else {
-				shareutils.LogInfoln("Create new table[player_rank]")
-			}
-		}
+	_, err = db.Exec(sqlexpr)
+	if err != nil {
+		seelog.Error("Failed to create new table,err:", err)
+		db.Close()
+		return nil
 	}
 
 	//	check admin_account
-	adminAccountExists, err := dbTableExist(db, "admin_account")
-	if err != nil {
-		shareutils.LogErrorln("failed to check admin_account table.err:", err)
-	} else {
-		if !adminAccountExists {
-			sqlexpr := `
-			create table admin_account(id integer primary key, account varchar(20), level integer)
+	sqlexpr = `
+			CREATE TABLE IF NOT EXISTS admin_account (id integer primary key, account varchar(20), level integer)
 			`
-
-			_, err = db.Exec(sqlexpr)
-			if err != nil {
-				shareutils.LogErrorln("Failed to create new table,err:", err)
-				db.Close()
-				return nil
-			} else {
-				shareutils.LogInfoln("Create new table[admin_account]")
-			}
-		}
+	_, err = db.Exec(sqlexpr)
+	if err != nil {
+		seelog.Error("Failed to create new table,err:", err)
+		db.Close()
+		return nil
 	}
 
 	//	check donate_request
-	donateRequestExists, err := dbTableExist(db, "donate_request")
-	if err != nil {
-		shareutils.LogErrorln("failed to check donate_request table.err:", err)
-	} else {
-		if !donateRequestExists {
-			sqlexpr := `
-			create table donate_request(id integer primary key, name varchar(20), uid integer, orderid varchar(50), money integer, note varchar(40), result integer)
+	sqlexpr = `
+			CREATE TABLE IF NOT EXISTS donate_request (id integer primary key, name varchar(20), uid integer, orderid varchar(50), money integer, note varchar(40), result integer)
 			`
+	_, err = db.Exec(sqlexpr)
+	if err != nil {
+		seelog.Error("Failed to create new table,err:", err)
+		db.Close()
+		return nil
+	}
 
-			_, err = db.Exec(sqlexpr)
-			if err != nil {
-				shareutils.LogErrorln("Failed to create new table,err:", err)
-				db.Close()
-				return nil
-			} else {
-				shareutils.LogInfoln("Create new table[donate_request]")
-			}
-		}
+	//	check role_name
+	sqlexpr = `
+		CREATE TABLE IF NOT EXISTS role_name (id integer primary key, uid integer, server_id integer, name0 varchar(20), name1 varchar(20), name2 varchar(20))
+	`
+	_, err = db.Exec(sqlexpr)
+	if err != nil {
+		seelog.Error("Failed to create new table,err:", err)
+		db.Close()
+		return nil
 	}
 
 	return db
@@ -218,7 +153,7 @@ const (
 func dbDonateRequestExists(db *sql.DB, orderId string) bool {
 	rows, err := db.Query("select count(*) as cnt from donate_request where orderid = '" + orderId + "'")
 	if err != nil {
-		shareutils.LogErrorf("Error on selecting uid,error[%s]", err.Error())
+		seelog.Errorf("Error on selecting uid,error[%s]", err.Error())
 		return true
 	}
 
@@ -251,7 +186,7 @@ func dbInsertDonateRequest(db *sql.DB, dr *DonateRequest) bool {
 	expr := "insert into donate_request values(null, '" + dr.Name + "'," + strconv.Itoa(dr.Uid) + ",'" + dr.OrderId + "'," + strconv.Itoa(dr.Money) + ",'" + dr.Note + "'," + strconv.Itoa(dr.Result) + ")"
 	_, err := db.Exec(expr)
 	if err != nil {
-		shareutils.LogErrorln("db exec failed.expr:", expr, " err:", err)
+		seelog.Error("db exec failed.expr:", expr, " err:", err)
 		return false
 	}
 
@@ -263,7 +198,7 @@ func dbUpdateDonateRequestResult(db *sql.DB, orderId string, result int) bool {
 
 	_, err := db.Exec(expr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			expr, err.Error())
 		return false
 	}
@@ -276,7 +211,7 @@ func dbUpdateDonateRequestMoney(db *sql.DB, orderId string, money int) bool {
 
 	_, err := db.Exec(expr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			expr, err.Error())
 		return false
 	}
@@ -292,7 +227,7 @@ func dbRemoveDonateRequest(db *sql.DB, orderId string) bool {
 	expr := "delete from donate_request where orderid='" + orderId + "'"
 	_, err := db.Exec(expr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			expr, err.Error())
 		return false
 	}
@@ -341,14 +276,14 @@ func dbInsertAdminAccount(db *sql.DB, account string, level int) bool {
 	var ainfo UserAccountInfo
 	ok, _ := dbGetUserAccountInfo(db, account, &ainfo)
 	if !ok {
-		shareutils.LogErrorln("Unexists account, opeartion failed.")
+		seelog.Error("Unexists account, opeartion failed.")
 		return false
 	}
 
 	expr := "insert into admin_account values(null, '" + account + "'," + strconv.Itoa(level) + ")"
 	_, err := db.Exec(expr)
 	if err != nil {
-		shareutils.LogErrorln("db exec failed.expr:", expr, " err:", err)
+		seelog.Error("db exec failed.expr:", expr, " err:", err)
 		return false
 	}
 
@@ -368,7 +303,7 @@ func dbGetAdminAccountInfo(db *sql.DB, account string, info *AdminAccountInfo) b
 	sqlexpr := "select level from admin_account where account = '" + account + "'"
 	rows, err := db.Query(sqlexpr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s]error[%s]", sqlexpr, err.Error())
+		seelog.Errorf("Error on executing expression[%s]error[%s]", sqlexpr, err.Error())
 		return false
 	} else {
 		defer rows.Close()
@@ -386,7 +321,7 @@ func dbGetAdminAccountInfo(db *sql.DB, account string, info *AdminAccountInfo) b
 func dbAdminAccountExists(db *sql.DB, account string) bool {
 	rows, err := db.Query("select count(*) as cnt from admin_account where account = '" + account + "'")
 	if err != nil {
-		shareutils.LogErrorf("Error on selecting uid,error[%s]", err.Error())
+		seelog.Errorf("Error on selecting uid,error[%s]", err.Error())
 		return true
 	}
 
@@ -408,7 +343,7 @@ func dbUpdateAdminAccount(db *sql.DB, account string, level int) bool {
 
 	_, err := db.Exec(expr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			expr, err.Error())
 		return false
 	}
@@ -424,7 +359,7 @@ func dbRemoveAdminAccount(db *sql.DB, account string) bool {
 	expr := "delete from admin_account where account='" + account + "'"
 	_, err := db.Exec(expr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			expr, err.Error())
 		return false
 	}
@@ -452,7 +387,7 @@ func dbTableExist(db *sql.DB, tableName string) (bool, error) {
 
 	rows.Scan(&tableCount)
 
-	shareutils.LogInfoln("table size:", tableCount, " table name:", tableName)
+	seelog.Info("table size:", tableCount, " table name:", tableName)
 
 	if tableCount == 1 {
 		return true, nil
@@ -462,18 +397,19 @@ func dbTableExist(db *sql.DB, tableName string) (bool, error) {
 }
 
 type UserRankInfo struct {
-	Uid   uint32 `json:"uid"`
-	Name  string `json:"name"`
-	Job   int    `json:"job"`
-	Level int    `json:"level"`
-	Expr  int    `json:"expr"`
-	Power int    `json:"power"`
+	Uid      uint32 `json:"uid"`
+	Name     string `json:"name"`
+	Job      int    `json:"job"`
+	Level    int    `json:"level"`
+	Expr     int    `json:"expr"`
+	Power    int    `json:"power"`
+	ServerId int    `json:"-"`
 }
 
 func dbIsUserRankExists(db *sql.DB, name string) bool {
 	rows, err := db.Query("select count(*) as cnt from player_rank where name = '" + name + "'")
 	if err != nil {
-		shareutils.LogErrorf("Error on selecting uid,error[%s]", err.Error())
+		seelog.Errorf("Error on selecting uid,error[%s]", err.Error())
 		return true
 	}
 
@@ -498,7 +434,7 @@ func dbRemoveUserRankInfo(db *sql.DB, name string) bool {
 	expr := "delete from player_rank where name='" + name + "'"
 	_, err := db.Exec(expr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			expr, err.Error())
 		return false
 	}
@@ -516,7 +452,7 @@ func dbGetUserRankInfo(db *sql.DB, uid uint32, info *UserRankInfo) bool {
 	sqlexpr := "select name,job,level,expr,power from player_rank where uid = " + strconv.Itoa(int(uid))
 	rows, err := db.Query(sqlexpr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s]error[%s]", sqlexpr, err.Error())
+		seelog.Errorf("Error on executing expression[%s]error[%s]", sqlexpr, err.Error())
 		return false
 	} else {
 		defer rows.Close()
@@ -541,7 +477,7 @@ func dbUpdateUserRankInfo(db *sql.DB, info *UserRankInfo) bool {
 		expr := "insert into player_rank values(null, " + strconv.FormatUint(uint64(info.Uid), 10) + ",'" + info.Name + "'," + strconv.Itoa(int(info.Job)) + "," + strconv.Itoa(int(info.Level)) + "," + strconv.FormatUint(uint64(info.Expr), 10) + "," + strconv.FormatUint(uint64(info.Power), 10) + ")"
 		_, err := db.Exec(expr)
 		if err != nil {
-			shareutils.LogErrorln("db exec failed.expr:", expr, " err:", err)
+			seelog.Error("db exec failed.expr:", expr, " err:", err)
 			return false
 		}
 
@@ -576,7 +512,7 @@ func dbUpdateUserRankInfo(db *sql.DB, info *UserRankInfo) bool {
 
 		_, err := db.Exec(expr)
 		if err != nil {
-			shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+			seelog.Errorf("Error on executing expression[%s] Error[%s]",
 				expr, err.Error())
 			return false
 		}
@@ -597,7 +533,7 @@ func dbGetUserRankInfoOrderByPower(db *sql.DB, limit int, job int) []UserRankInf
 	expr += " order by power desc, level desc limit " + strconv.Itoa(limit)
 	rows, err := db.Query(expr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			expr, err.Error())
 		return nil
 	}
@@ -634,7 +570,7 @@ func dbGetUserRankInfoOrderByLevel(db *sql.DB, limit int, job int) []UserRankInf
 	expr += " order by level desc, power desc limit " + strconv.Itoa(limit)
 	rows, err := db.Query(expr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			expr, err.Error())
 		return nil
 	}
@@ -671,7 +607,7 @@ func dbInsertUserDonateConsume(db *sql.DB, uid uint32, name string, itemid int, 
 	expr := "insert into userdonateconsume values(null, " + strconv.FormatUint(uint64(uid), 10) + ",'" + name + "' ," + strconv.FormatUint(uint64(itemid), 10) + "," + strconv.FormatUint(uint64(cost), 10) + "," + strconv.FormatUint(uint64(time.Now().Unix()), 10) + ")"
 	_, err := db.Exec(expr)
 	if err != nil {
-		shareutils.LogErrorln("db exec failed.expr:", expr, " err:", err)
+		seelog.Error("db exec failed.expr:", expr, " err:", err)
 		return false
 	}
 
@@ -684,7 +620,7 @@ func dbGetUserDonateConsumeSum(db *sql.DB, uid uint32) int {
 
 	rows, err := db.Query(expr)
 	if nil != err {
-		shareutils.LogErrorln("db query failed.expr:", expr, " err:", err)
+		seelog.Error("db query failed.expr:", expr, " err:", err)
 		return 0
 	}
 
@@ -767,7 +703,7 @@ type UserDonateInfo struct {
 func dbIsUserDonateExists(db *sql.DB, uid uint32) bool {
 	rows, err := db.Query("select count(*) as cnt from userdonate where uid = '" + strconv.FormatUint(uint64(uid), 10) + "'")
 	if err != nil {
-		shareutils.LogErrorf("Error on selecting uid,error[%s]", err.Error())
+		seelog.Errorf("Error on selecting uid,error[%s]", err.Error())
 		return true
 	}
 
@@ -788,7 +724,7 @@ func dbInsertUserDonateInfo(db *sql.DB, info *UserDonateInfo) bool {
 	expr := "insert into userdonate values(" + strconv.FormatUint(uint64(info.uid), 10) + "," + strconv.FormatUint(uint64(info.donate), 10) + "," + strconv.FormatUint(uint64(info.lastdonatetime), 10) + "," + strconv.FormatUint(uint64(info.expiretime), 10) + ")"
 	_, err := db.Exec(expr)
 	if err != nil {
-		shareutils.LogErrorln("db exec failed.expr:", expr, " err:", err)
+		seelog.Error("db exec failed.expr:", expr, " err:", err)
 		return false
 	}
 
@@ -805,7 +741,7 @@ func dbGetUserDonateInfo(db *sql.DB, uid uint32, info *UserDonateInfo) bool {
 	sqlexpr := "select donate,lastdonatetime,expiretime from userdonate where uid = " + strconv.FormatUint(uint64(uid), 10)
 	rows, err := db.Query(sqlexpr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s]error[%s]", sqlexpr, err.Error())
+		seelog.Errorf("Error on executing expression[%s]error[%s]", sqlexpr, err.Error())
 		return false
 	} else {
 		defer rows.Close()
@@ -824,7 +760,7 @@ func dbGetUserDonateInfo(db *sql.DB, uid uint32, info *UserDonateInfo) bool {
 func dbIncUserDonateInfo(db *sql.DB, uid uint32, donateMoney int, donateOrderId string) bool {
 	//	先查找订单号是否已被记录
 	if dbIsUserDonateHistoryExists(db, donateOrderId) {
-		shareutils.LogErrorln("donate order id already been used")
+		seelog.Error("donate order id already been used")
 		return false
 	}
 
@@ -835,7 +771,7 @@ func dbIncUserDonateInfo(db *sql.DB, uid uint32, donateMoney int, donateOrderId 
 	history.donate = donateMoney
 	history.donateorderid = donateOrderId
 	if !dbInsertUserDonateHistory(db, history) {
-		shareutils.LogErrorln("failed to insert donate history ", history)
+		seelog.Error("failed to insert donate history ", history)
 		return false
 	}
 
@@ -860,7 +796,7 @@ func dbIncUserDonateInfo(db *sql.DB, uid uint32, donateMoney int, donateOrderId 
 
 		_, err := db.Exec(expr)
 		if err != nil {
-			shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+			seelog.Errorf("Error on executing expression[%s] Error[%s]",
 				expr, err.Error())
 			return false
 		}
@@ -891,7 +827,7 @@ func dbUpdateUserDonateInfo(db *sql.DB, uid uint32, donateMoney int) bool {
 
 		_, err := db.Exec(expr)
 		if err != nil {
-			shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+			seelog.Errorf("Error on executing expression[%s] Error[%s]",
 				expr, err.Error())
 			return false
 		}
@@ -905,7 +841,7 @@ func dbRemoveUserDonateInfo(db *sql.DB, uid uint32) bool {
 		expr := "delete from userdonate where uid=" + strconv.FormatUint(uint64(uid), 10)
 		_, err := db.Exec(expr)
 		if err != nil {
-			shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+			seelog.Errorf("Error on executing expression[%s] Error[%s]",
 				expr, err.Error())
 			return false
 		}
@@ -914,7 +850,7 @@ func dbRemoveUserDonateInfo(db *sql.DB, uid uint32) bool {
 		expr = "delete from userdonatehistory where uid=" + strconv.FormatUint(uint64(uid), 10)
 		_, err = db.Exec(expr)
 		if err != nil {
-			shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+			seelog.Errorf("Error on executing expression[%s] Error[%s]",
 				expr, err.Error())
 			return false
 		}
@@ -938,7 +874,7 @@ func dbIsUserDonateHistoryExists(db *sql.DB, donateOrderId string) bool {
 	rows, err := db.Query(expr)
 
 	if nil != err {
-		shareutils.LogErrorln("dbIsUserDonateHistoryExists err:", err)
+		seelog.Error("dbIsUserDonateHistoryExists err:", err)
 		return true
 	}
 
@@ -961,7 +897,7 @@ func dbInsertUserDonateHistory(db *sql.DB, history *UserDonateHistory) bool {
 	expr := "insert into userdonatehistory values(null, " + strconv.FormatUint(uint64(history.uid), 10) + "," + strconv.Itoa(history.donate) + "," + strconv.Itoa(history.donatetime) + "," + "'" + history.donateorderid + "'" + ")"
 	_, err := db.Exec(expr)
 	if err != nil {
-		shareutils.LogErrorln("db exec failed.expr:", expr, " err:", err)
+		seelog.Error("db exec failed.expr:", expr, " err:", err)
 		return false
 	}
 
@@ -974,7 +910,7 @@ func dbGetUserDonateHistorySum(db *sql.DB, uid uint32) int {
 
 	rows, err := db.Query(expr)
 	if nil != err {
-		shareutils.LogErrorln("db query failed.expr:", expr, " err:", err)
+		seelog.Error("db query failed.expr:", expr, " err:", err)
 		return 0
 	}
 
@@ -1011,7 +947,7 @@ func dbGetUserAccountInfo(db *sql.DB, account string, info *UserAccountInfo) (bo
 	sqlexpr := "select uid,password,name0,name1,name2,online from useraccount where account = '" + account + "'"
 	rows, err := db.Query(sqlexpr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s]error[%s]", sqlexpr, err.Error())
+		seelog.Errorf("Error on executing expression[%s]error[%s]", sqlexpr, err.Error())
 		return false, errors.New("Select error." + err.Error())
 	} else {
 		defer rows.Close()
@@ -1037,7 +973,7 @@ func dbGetUserAccountInfoByUID(db *sql.DB, uid uint32, info *UserAccountInfo) bo
 	sqlexpr := "select account,password,name0,name1,name2,online from useraccount where uid = " + strconv.FormatUint(uint64(uid), 10)
 	rows, err := db.Query(sqlexpr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s]error[%s]", sqlexpr, err.Error())
+		seelog.Errorf("Error on executing expression[%s]error[%s]", sqlexpr, err.Error())
 		return false
 	} else {
 		defer rows.Close()
@@ -1046,7 +982,7 @@ func dbGetUserAccountInfoByUID(db *sql.DB, uid uint32, info *UserAccountInfo) bo
 			fetched = true
 			rows.Scan(&info.account, &info.password, &info.name0, &info.name1, &info.name2, &info.online)
 			info.uid = uid
-			//shareutils.LogInfoln("Fetched uid:", info.uid, " password:", info.password, " online:", info.online, " name0:", info.name0, " name1:", info.name1, " name2:", info.name2)
+			//seelog.Info("Fetched uid:", info.uid, " password:", info.password, " online:", info.online, " name0:", info.name0, " name1:", info.name1, " name2:", info.name2)
 		}
 	}
 
@@ -1077,7 +1013,7 @@ func dbInsertUserAccountInfo(db *sql.DB, users []UserAccountInfo) bool {
 		sqlexpr := "insert into useraccount values(null, '" + v.account + "','" + v.password + "','','',''," + strconv.FormatInt(0, 10) + ")"
 		_, err := db.Exec(sqlexpr)
 		if err != nil {
-			shareutils.LogErrorf("Error on executing expression[%s] Error[%s]", sqlexpr, err.Error())
+			seelog.Errorf("Error on executing expression[%s] Error[%s]", sqlexpr, err.Error())
 		}
 	}
 
@@ -1087,7 +1023,7 @@ func dbInsertUserAccountInfo(db *sql.DB, users []UserAccountInfo) bool {
 func dbUserAccountExist(db *sql.DB, account string) bool {
 	rows, err := db.Query("select uid from useraccount where account = '" + account + "'")
 	if err != nil {
-		shareutils.LogErrorf("Error on selecting uid,error[%s]", err.Error())
+		seelog.Errorf("Error on selecting uid,error[%s]", err.Error())
 		return true
 	}
 
@@ -1104,7 +1040,7 @@ func dbRemoveUserAccountInfo(db *sql.DB, account string) bool {
 	sqlexpr := "delete from useraccount where account = '" + account + "'"
 	_, err := db.Exec(sqlexpr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			sqlexpr, err.Error())
 		return false
 	}
@@ -1120,7 +1056,7 @@ func dbUpdateUserAccountState(db *sql.DB, account string, online bool) bool {
 	sqlexpr := "update useraccount set online = " + strconv.FormatInt(int64(boolvalue), 10) + " where account = '" + account + "'"
 	_, err := db.Exec(sqlexpr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			sqlexpr, err.Error())
 		return false
 	}
@@ -1132,7 +1068,7 @@ func dbUpdateUserAccountPassword(db *sql.DB, account string, password string) bo
 	sqlexpr := "update useraccount set password = '" + password + "' where account = '" + account + "'"
 	_, err := db.Exec(sqlexpr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			sqlexpr, err.Error())
 		return false
 	}
@@ -1144,7 +1080,7 @@ func dbResetUserAccountOnlineState(db *sql.DB) bool {
 	sqlexpr := "update useraccount set online = 0"
 	_, err := db.Exec(sqlexpr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			sqlexpr, err.Error())
 		return false
 	}
@@ -1157,7 +1093,7 @@ func dbUserNameExist(db *sql.DB, name string) bool {
 	rows, err := db.Query(sqlexpr)
 
 	if err != nil {
-		shareutils.LogErrorln(err)
+		seelog.Error(err)
 		return true
 	} else {
 		defer rows.Close()
@@ -1185,7 +1121,7 @@ func dbAddUserName(db *sql.DB, account string, name string) bool {
 		sqlexpr := "update useraccount set name0 = '" + name + "' where account='" + account + "'"
 		_, err := db.Exec(sqlexpr)
 		if err != nil {
-			shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+			seelog.Errorf("Error on executing expression[%s] Error[%s]",
 				sqlexpr, err.Error())
 			return false
 		}
@@ -1193,7 +1129,7 @@ func dbAddUserName(db *sql.DB, account string, name string) bool {
 		sqlexpr := "update useraccount set name1 = '" + name + "' where account='" + account + "'"
 		_, err := db.Exec(sqlexpr)
 		if err != nil {
-			shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+			seelog.Errorf("Error on executing expression[%s] Error[%s]",
 				sqlexpr, err.Error())
 			return false
 		}
@@ -1201,7 +1137,7 @@ func dbAddUserName(db *sql.DB, account string, name string) bool {
 		sqlexpr := "update useraccount set name2 = '" + name + "' where account='" + account + "'"
 		_, err := db.Exec(sqlexpr)
 		if err != nil {
-			shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+			seelog.Errorf("Error on executing expression[%s] Error[%s]",
 				sqlexpr, err.Error())
 			return false
 		}
@@ -1233,7 +1169,7 @@ func dbRemoveUserName(db *sql.DB, account string, name string) bool {
 	sqlexpr := "update useraccount set name" + strconv.FormatInt(int64(nameindex), 10) + " = '' where account='" + account + "'"
 	_, err := db.Exec(sqlexpr)
 	if err != nil {
-		shareutils.LogErrorf("Error on executing expression[%s] Error[%s]",
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			sqlexpr, err.Error())
 		return false
 	}
@@ -1245,7 +1181,7 @@ func dbGetUserUidByName(db *sql.DB, name string) uint32 {
 	rows, err := db.Query(expr)
 
 	if err != nil {
-		shareutils.LogErrorln(err)
+		seelog.Error(err)
 		return 0
 	}
 
@@ -1265,7 +1201,7 @@ func dbGetUserUidByAccount(db *sql.DB, account string) uint32 {
 	rows, err := db.Query(expr)
 
 	if err != nil {
-		shareutils.LogErrorln(err)
+		seelog.Error(err)
 		return 0
 	}
 
@@ -1305,7 +1241,7 @@ func dbInsertSystemGift(db *sql.DB, gift *SystemGift) bool {
 
 	_, err := db.Exec(expr)
 	if err != nil {
-		shareutils.LogErrorln("db exec error, expr:", expr, "err:", err)
+		seelog.Error("db exec error, expr:", expr, "err:", err)
 		return false
 	}
 
@@ -1317,7 +1253,7 @@ func dbGetSystemGiftByUid(db *sql.DB, uid uint32, gift *SystemGift) bool {
 	rows, err := db.Query(expr)
 
 	if err != nil {
-		shareutils.LogErrorln("db query expr", expr, "err:", err)
+		seelog.Error("db query expr", expr, "err:", err)
 		return false
 	}
 
@@ -1342,7 +1278,7 @@ func dbGetSystemGiftCountByUid(db *sql.DB, uid uint32, itemid int) int {
 	rowsCount, err := db.Query(expr)
 
 	if err != nil {
-		shareutils.LogErrorln("sql expr ", expr, " error:", err)
+		seelog.Error("sql expr ", expr, " error:", err)
 		return 0
 	}
 
@@ -1361,7 +1297,7 @@ func dbGetSystemGiftIdByUid(db *sql.DB, uid uint32) []int {
 	rowsCount, err := db.Query(expr)
 
 	if err != nil {
-		shareutils.LogErrorln("sql expr ", expr, " error:", err)
+		seelog.Error("sql expr ", expr, " error:", err)
 		return nil
 	}
 
@@ -1382,7 +1318,7 @@ func dbGetSystemGiftIdByUid(db *sql.DB, uid uint32) []int {
 	rowsRet, err := db.Query(expr)
 
 	if err != nil {
-		shareutils.LogErrorln("sql expr ", expr, " error:", err)
+		seelog.Error("sql expr ", expr, " error:", err)
 		return nil
 	}
 
