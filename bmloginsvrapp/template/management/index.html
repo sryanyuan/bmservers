@@ -1,0 +1,20 @@
+{{define "Title"}}管理面板{{end}}
+{{define "importcss"}}
+<link href="/static/css/management.css" rel="stylesheet" />
+{{end}}
+{{define "importjs"}}
+<script src="/static/js/home.js"></script>
+{{end}}
+{{define "content"}}
+<!--banner-->
+<div id="id-content" class="container theme-showcase" role="main">
+	<div class="row">
+		<div class="col-md-2 col-md-offset-0">
+			{{template "manage_nav"}}
+		</div>
+		<div class="col-md-6 col-md-offset-0 manage_content">
+			<strong>管理后台</strong>
+		</div>
+	</div>
+</div>
+{{end}}

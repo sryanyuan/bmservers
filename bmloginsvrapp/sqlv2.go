@@ -29,7 +29,7 @@ func initDatabaseUserV2(path string) *sql.DB {
 	}
 
 	sqlexpr := `
-		CREATE TABLE IF NOT EXISTS useraccount (uid integer primary key, account varchar(20), password varchar(20), name0 varchar(20), name1 varchar(20), name2 varchar(20), online bool)
+		CREATE TABLE IF NOT EXISTS useraccount (uid integer primary key, account varchar(20) UNIQUE, password varchar(20), name0 varchar(20), name1 varchar(20), name2 varchar(20), online bool, mail VARCHAR(64))
 		`
 	_, err = db.Exec(sqlexpr)
 	if err != nil {
@@ -118,6 +118,17 @@ func initDatabaseUserV2(path string) *sql.DB {
 	//	check role_name
 	sqlexpr = `
 		CREATE TABLE IF NOT EXISTS role_name (id integer primary key, uid integer, server_id integer, name0 varchar(20), name1 varchar(20), name2 varchar(20))
+	`
+	_, err = db.Exec(sqlexpr)
+	if err != nil {
+		seelog.Error("Failed to create new table,err:", err)
+		db.Close()
+		return nil
+	}
+
+	//	check web_user
+	sqlexpr = `
+		CREATE TABLE IF NOT EXISTS web_user (uid integer primary key, user_name VARCHAR(20) UNIQUE, password VARCHAR(64), permission INTEGER, mail VARCHAR(64))
 	`
 	_, err = db.Exec(sqlexpr)
 	if err != nil {
@@ -261,6 +272,32 @@ func dbAddUserNameV2(db *sql.DB, uid uint32, serverId int, name string) bool {
 	}
 
 	return false
+}
+
+func dbGetUserAccountInfoByName(db *sql.DB, name string) ([]*ExportUserAccountInfo, error) {
+	rows, err := db.Query("SELECT uid, server_id FROM role_name WHERE name0 = ? or name1 = ? or name2 = ?",
+		name, name, name)
+	if nil != err {
+		return nil, err
+	}
+	defer rows.Close()
+
+	resultSet := make([]*ExportUserAccountInfo, 0, 10)
+	for rows.Next() {
+		var result ExportUserAccountInfo
+		err = rows.Scan(&result.Uid, &result.ServerId)
+		if nil != err {
+			return nil, err
+		}
+		resultSet = append(resultSet, &result)
+
+		err = db.QueryRow("SELECT account, password FROM useraccount WHERE uid = ?", result.Uid).Scan(&result.Account, &result.Password)
+		if nil != err {
+			return nil, err
+		}
+	}
+
+	return resultSet, nil
 }
 
 func dbIsUserRankExistsV2(db *sql.DB, serverId int, name string) bool {

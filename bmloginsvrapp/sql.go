@@ -932,6 +932,15 @@ type UserAccountInfo struct {
 	name0    string
 	name1    string
 	name2    string
+	mail     string
+}
+
+type ExportUserAccountInfo struct {
+	Account  string
+	Uid      uint32
+	Mail     string
+	Password string
+	ServerId int
 }
 
 func dbGetUserAccountInfo(db *sql.DB, account string, info *UserAccountInfo) (bool, error) {
@@ -944,7 +953,7 @@ func dbGetUserAccountInfo(db *sql.DB, account string, info *UserAccountInfo) (bo
 
 	//	Select
 	fetched := false
-	sqlexpr := "select uid,password,name0,name1,name2,online from useraccount where account = '" + account + "'"
+	sqlexpr := "select uid,password,name0,name1,name2,mail from useraccount where account = '" + account + "'"
 	rows, err := db.Query(sqlexpr)
 	if err != nil {
 		seelog.Errorf("Error on executing expression[%s]error[%s]", sqlexpr, err.Error())
@@ -954,7 +963,7 @@ func dbGetUserAccountInfo(db *sql.DB, account string, info *UserAccountInfo) (bo
 		//	Read data
 		if rows.Next() {
 			fetched = true
-			rows.Scan(&info.uid, &info.password, &info.name0, &info.name1, &info.name2, &info.online)
+			rows.Scan(&info.uid, &info.password, &info.name0, &info.name1, &info.name2, &info.mail)
 			info.account = account
 			//log.Println("Fetched uid:", info.uid, " password:", info.password, " online:", info.online)
 		}
@@ -970,7 +979,7 @@ func dbGetUserAccountInfoByUID(db *sql.DB, uid uint32, info *UserAccountInfo) bo
 
 	//	Select
 	fetched := false
-	sqlexpr := "select account,password,name0,name1,name2,online from useraccount where uid = " + strconv.FormatUint(uint64(uid), 10)
+	sqlexpr := "select account,password,name0,name1,name2,mail from useraccount where uid = " + strconv.FormatUint(uint64(uid), 10)
 	rows, err := db.Query(sqlexpr)
 	if err != nil {
 		seelog.Errorf("Error on executing expression[%s]error[%s]", sqlexpr, err.Error())
@@ -980,7 +989,7 @@ func dbGetUserAccountInfoByUID(db *sql.DB, uid uint32, info *UserAccountInfo) bo
 		//	Read data
 		if rows.Next() {
 			fetched = true
-			rows.Scan(&info.account, &info.password, &info.name0, &info.name1, &info.name2, &info.online)
+			rows.Scan(&info.account, &info.password, &info.name0, &info.name1, &info.name2, &info.mail)
 			info.uid = uid
 			//seelog.Info("Fetched uid:", info.uid, " password:", info.password, " online:", info.online, " name0:", info.name0, " name1:", info.name1, " name2:", info.name2)
 		}
@@ -1010,10 +1019,11 @@ func dbInsertUserAccountInfo(db *sql.DB, users []UserAccountInfo) bool {
 			continue
 		}
 
-		sqlexpr := "insert into useraccount values(null, '" + v.account + "','" + v.password + "','','',''," + strconv.FormatInt(0, 10) + ")"
+		sqlexpr := "insert into useraccount values(null, '" + v.account + "','" + v.password + "','','',''," + strconv.FormatInt(0, 10) + ",'" + v.mail + "')"
 		_, err := db.Exec(sqlexpr)
 		if err != nil {
 			seelog.Errorf("Error on executing expression[%s] Error[%s]", sqlexpr, err.Error())
+			return false
 		}
 	}
 

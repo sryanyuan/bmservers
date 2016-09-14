@@ -86,12 +86,12 @@ func main() {
 	ReadControlAddr("./login/gmlist.txt")
 
 	//	Load config
-	ipaddrclient := flag.String("lsaddr", "", "Listen clients")
-	ipaddrserver := flag.String("lsgsaddr", "", "Listen gameserver")
-	redisAddress := flag.String("redisaddr", "", "Redis address")
-	httpAddr := flag.String("httpaddr", "", "http listen address (for game room)")
-	rpcHttpAddr := flag.String("rpc-http-addr", "", "rpc address")
-	webHttpAddr := flag.String("web-http-addr", "", "web http address")
+	ipaddrclient := flag.String("tcp-client-addr", "", "Listen clients")
+	ipaddrserver := flag.String("tcp-gs-addr", "", "Listen gameserver")
+	redisAddress := flag.String("redis-addr", "", "Redis address")
+	httpAddr := flag.String("http-addr", "", "http listen address (for game room)")
+	rpcHttpAddr := flag.String("http-rpc-addr", "", "rpc address")
+	webHttpAddr := flag.String("http-web-addr", "", "web http address")
 	flag.Parse()
 	if len(*ipaddrclient) == 0 || len(*ipaddrserver) == 0 {
 		log.Println("invalid input parameters.")
@@ -106,18 +106,12 @@ func main() {
 	}
 
 	//	Initialize the database
-	g_DBUser = initDatabaseUser("./login/users.db")
+	g_DBUser = initDatabaseUserV2("./login/users.db")
 	if nil == g_DBUser {
 		seelog.Error("Initialize database failed.")
 		return
 	}
 	defer g_DBUser.Close()
-
-	//	Initialize dll module
-	if !initDllModule("./login/BMHumSaveControl.dll") {
-		seelog.Error("Can't load the save control module.")
-		return
-	}
 
 	//	Initialize bug report database
 	g_DBCrashReport = initDatabaseCrashReport("./login/crashreport.db")
@@ -156,6 +150,11 @@ func main() {
 	//	web server
 	if len(*webHttpAddr) != 0 {
 		startWebServer(*webHttpAddr)
+	}
+
+	//	Initialize dll module
+	if !initDllModule("./login/BMHumSaveControl.dll") {
+		seelog.Error("Can't load the save control module.")
 	}
 
 	//	main thread message handler
