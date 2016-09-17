@@ -13,6 +13,7 @@ enum LSOp {
 	PlayerLoginExtHumDataNtf = 11008;
 	SyncPlayerRankNtf = 11009;
 	RegisterServerRsp = 11010;
+	ProtoTypeNtf = 11011;
 	//	C<->LS
 	LSAccessNtf = 11100;
 	VerifyAccountReq = 11101;
@@ -118,6 +119,10 @@ message MSyncPlayerRankNtf {
 	optional string Data = 1;
 }
 
+message MProtoTypeNtf {
+	required int32 ProtoVersion = 1;
+}
+
 //	C<->LS
 message MLSAccessNtf {
 	required int32 LID = 1;
@@ -182,4 +187,11 @@ message MCreateHumRsp {
 
 message MDelHumRsp {
 	required string Name = 1;
+}
+
+//	C<->S
+message MRegisterClientReq {
+	required int32 LID = 1;
+	required int32 SID = 2;
+	required string AccessToken = 3;
 }

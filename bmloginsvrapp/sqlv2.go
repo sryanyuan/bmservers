@@ -400,7 +400,7 @@ func dbGetUserRankInfoOrderByPowerV2(db *sql.DB, serverId int, limit int, job in
 		expr += " WHERE job = " + strconv.Itoa(job) + " AND server_id = " + strconv.Itoa(serverId)
 	}
 
-	expr += " ORDER BY power DEC, level DESC LIMIT " + strconv.Itoa(limit)
+	expr += " ORDER BY power DESC, level DESC LIMIT " + strconv.Itoa(limit)
 	rows, err := db.Query(expr)
 	if err != nil {
 		seelog.Errorf("Error on executing expression[%s] Error[%s]",

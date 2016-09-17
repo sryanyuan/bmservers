@@ -186,7 +186,8 @@ func main() {
 			}
 		case evt := <-g_ServerC.GetEventQueue():
 			{
-				ProcessServerCEvent(evt)
+				//ProcessServerCEvent(evt)
+				processEventFromClient(evt)
 			}
 		case evt := <-g_Redis.outputChan:
 			{

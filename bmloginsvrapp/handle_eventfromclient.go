@@ -56,6 +56,7 @@ func processEventFromClient(evt *tcpnetwork.ConnEvent) {
 }
 
 func onEventFromClientConnected(evt *tcpnetwork.ConnEvent) {
+	seelog.Info("Client ", evt.Conn.GetRemoteAddress(), " connected")
 	evt.Conn.SetConnId(clientNodeSeed)
 	var cn ClientNode
 	cn.clientConnId = int32(clientNodeSeed)
@@ -64,11 +65,15 @@ func onEventFromClientConnected(evt *tcpnetwork.ConnEvent) {
 	evt.Conn.SetUserdata(&cn)
 	clientNodeMap[cn.clientConnId] = &cn
 
+	//	save access token
+	uuidValue, _ := uuid.NewUUID()
+	cn.accessToken = uuidValue.String()
+
 	//	send access ntf
 	var ntf protocol.MLSAccessNtf
-	uuidValue, _ := uuid.NewUUID()
-	ntf.AccessToken = proto.String(uuidValue.String())
+	ntf.AccessToken = proto.String(cn.accessToken)
 	ntf.LID = proto.Int32(cn.clientConnId)
+	ntf.GameType = proto.Int(2)
 	sendProto(evt.Conn, uint32(protocol.LSOp_LSAccessNtf), &ntf)
 }
 
@@ -429,11 +434,13 @@ func verifyAccount(conn *tcpnetwork.Connection, client *ClientNode, pb *protocol
 			sendQuickMessage(conn, 7, 0)
 		} else {
 			var serverListNtf protocol.MServerListNtf
-			serverListNtf.Servers = make([]*protocol.MServerListItem, len(serverNodeMap))
+			serverListNtf.Servers = make([]*protocol.MServerListItem, 0, len(serverNodeMap))
 			for _, v := range serverNodeMap {
 				var item protocol.MServerListItem
 				item.ServerAddress = proto.String(v.exposeAddress)
 				item.ServerName = proto.String(v.serverName)
+				item.ServerID = proto.Int(v.serverId)
+				serverListNtf.Servers = append(serverListNtf.Servers, &item)
 			}
 			sendProto(conn, uint32(protocol.LSOp_ServerListNtf), &serverListNtf)
 		}

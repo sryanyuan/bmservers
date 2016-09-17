@@ -58,7 +58,7 @@ func onEventFromServerConnected(evt *tcpnetwork.ConnEvent) {
 	var sn ServerNode
 	sn.serverConnId = serverNodeSeed
 	serverNodeSeed++
-	evt.Userdata = &sn
+	evt.Conn.SetUserdata(&sn)
 }
 
 func onEventFromServerDisconnected(evt *tcpnetwork.ConnEvent) {
@@ -78,7 +78,7 @@ func onEventFromServerDisconnected(evt *tcpnetwork.ConnEvent) {
 
 func onEventFromServerData(evt *tcpnetwork.ConnEvent) {
 	var user *ServerNode
-	userData := evt.Userdata
+	userData := evt.Conn.GetUserdata()
 	if nil != userData {
 		user = userData.(*ServerNode)
 	}
@@ -93,6 +93,13 @@ func onEventFromServerData(evt *tcpnetwork.ConnEvent) {
 	}
 
 	if user.serverId == 0 {
+		if opcode == uint32(loginopstart+1) {
+			//	old protocol compatible
+			var protoNtf protocol.MProtoTypeNtf
+			protoNtf.ProtoVersion = proto.Int(1)
+			sendProto(evt.Conn, uint32(protocol.LSOp_ProtoTypeNtf), &protoNtf)
+			return
+		}
 		//	register first
 		if opcode != uint32(protocol.LSOp_RegisterServerReq) {
 			seelog.Error("Invalid server register package")
@@ -124,6 +131,7 @@ func onEventFromServerData(evt *tcpnetwork.ConnEvent) {
 		//	done
 		user.exposeAddress = pb.GetExposeAddress()
 		user.serverId = int(pb.GetServerID())
+		user.serverName = pb.GetServerName()
 		user.conn = evt.Conn
 		serverNodeMap[user.serverId] = user
 		seelog.Info("Server [", user.serverId, "] register success")
@@ -167,13 +175,16 @@ func onEventFromServerData(evt *tcpnetwork.ConnEvent) {
 				}
 
 				if pb.GetAccessToken() != client.accessToken {
-					seelog.Error("Client access token verify failed, UID : ", client.uid)
+					seelog.Error("Client access token verify failed, UID : ", client.uid, " token:", pb.GetAccessToken(), " wanted:", client.accessToken)
 				} else {
 					client.gsConnId = pb.GetGID()
 					client.connCode = pb.GetConnCode()
 					client.gsServerId = user.serverId
 					seelog.Info("Verify access token of player : ", client.uid, " to gs ", user.serverId, " success")
 				}
+
+				//	sync humdata to client
+				syncPlayerHumBaseData(evt.Conn, client)
 			}
 		}
 	case protocol.LSOp_SavePlayerDataReq:

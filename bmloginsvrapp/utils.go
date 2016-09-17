@@ -55,6 +55,7 @@ func sendProto(conn *tcpnetwork.Connection, op uint32, pb proto.Message) error {
 
 	data, err := proto.Marshal(pb)
 	if nil != err {
+		seelog.Error("Failed to send proto : ", err)
 		return err
 	}
 	buf.Write(data)
