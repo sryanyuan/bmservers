@@ -1156,6 +1156,47 @@ func dbAddUserName(db *sql.DB, account string, name string) bool {
 	return true
 }
 
+func dbAddUserNameByUid(db *sql.DB, uid uint32, name string) bool {
+	var info UserAccountInfo
+	ret := dbGetUserAccountInfoByUID(db, uid, &info)
+	if !ret {
+		return false
+	}
+
+	sameName := dbUserNameExist(db, name)
+	if sameName {
+		return false
+	}
+
+	if len(info.name0) == 0 {
+		sqlexpr := "UPDATE useraccount SET name0 = '" + name + "' WHERE uid=" + strconv.Itoa(int(uid))
+		_, err := db.Exec(sqlexpr)
+		if err != nil {
+			seelog.Errorf("Error on executing expression[%s] Error[%s]",
+				sqlexpr, err.Error())
+			return false
+		}
+	} else if len(info.name1) == 0 {
+		sqlexpr := "UPDATE useraccount SET name1 = '" + name + "' WHERE uid=" + strconv.Itoa(int(uid))
+		_, err := db.Exec(sqlexpr)
+		if err != nil {
+			seelog.Errorf("Error on executing expression[%s] Error[%s]",
+				sqlexpr, err.Error())
+			return false
+		}
+	} else if len(info.name2) == 0 {
+		sqlexpr := "UPDATE useraccount SET name2 = '" + name + "' WHERE uid=" + strconv.Itoa(int(uid))
+		_, err := db.Exec(sqlexpr)
+		if err != nil {
+			seelog.Errorf("Error on executing expression[%s] Error[%s]",
+				sqlexpr, err.Error())
+			return false
+		}
+	}
+
+	return true
+}
+
 func dbRemoveUserName(db *sql.DB, account string, name string) bool {
 	var info UserAccountInfo
 	ret, _ := dbGetUserAccountInfo(db, account, &info)
@@ -1177,6 +1218,36 @@ func dbRemoveUserName(db *sql.DB, account string, name string) bool {
 	}
 
 	sqlexpr := "update useraccount set name" + strconv.FormatInt(int64(nameindex), 10) + " = '' where account='" + account + "'"
+	_, err := db.Exec(sqlexpr)
+	if err != nil {
+		seelog.Errorf("Error on executing expression[%s] Error[%s]",
+			sqlexpr, err.Error())
+		return false
+	}
+	return true
+}
+
+func dbRemoveUserNameByUid(db *sql.DB, uid uint32, name string) bool {
+	var info UserAccountInfo
+	ret := dbGetUserAccountInfoByUID(db, uid, &info)
+	if !ret {
+		return false
+	}
+
+	nameindex := int(-1)
+	if info.name0 == name {
+		nameindex = 0
+	} else if info.name1 == name {
+		nameindex = 1
+	} else if info.name2 == name {
+		nameindex = 2
+	}
+
+	if nameindex == -1 {
+		return false
+	}
+
+	sqlexpr := "UPDATE useraccount SET name" + strconv.FormatInt(int64(nameindex), 10) + " = '' WHERE uid=" + strconv.Itoa(int(uid))
 	_, err := db.Exec(sqlexpr)
 	if err != nil {
 		seelog.Errorf("Error on executing expression[%s] Error[%s]",

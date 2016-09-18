@@ -14,6 +14,7 @@ enum LSOp {
 	SyncPlayerRankNtf = 11009;
 	RegisterServerRsp = 11010;
 	ProtoTypeNtf = 11011;
+	PlayerDisconnectedNtf = 11012;
 	//	C<->LS
 	LSAccessNtf = 11100;
 	VerifyAccountReq = 11101;
@@ -121,6 +122,10 @@ message MSyncPlayerRankNtf {
 
 message MProtoTypeNtf {
 	required int32 ProtoVersion = 1;
+}
+
+message MPlayerDisconnectedNtf {
+	required int32 LID = 1;
 }
 
 //	C<->LS

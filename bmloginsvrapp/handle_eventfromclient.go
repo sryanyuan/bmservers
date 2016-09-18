@@ -9,6 +9,8 @@ import (
 
 	"unsafe"
 
+	"container/list"
+
 	"github.com/cihub/seelog"
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
@@ -27,15 +29,57 @@ type ClientNode struct {
 }
 
 var (
-	clientNodeMap  map[int32]*ClientNode  // key : clientConnId , for all connected peers
-	clientUserMap  map[uint32]*ClientNode // key : uid , for all verified user
+	clientNodeMap  map[int32]*ClientNode // key : clientConnId , for all connected peers
+	clientUserMap  map[uint32]*list.List // key : uid , for all verified user
 	clientNodeSeed int
 )
 
 func init() {
 	clientNodeSeed = 1
 	clientNodeMap = make(map[int32]*ClientNode)
-	clientUserMap = make(map[uint32]*ClientNode)
+	clientUserMap = make(map[uint32]*list.List)
+}
+
+func addClientToClientUserMap(client *ClientNode) {
+	clients, ok := clientUserMap[client.uid]
+	if !ok {
+		clients = list.New()
+		clientUserMap[client.uid] = clients
+	}
+
+	clients.PushBack(client)
+}
+
+func removeClientFromClientUserMap(client *ClientNode) bool {
+	clients, ok := clientUserMap[client.uid]
+	if !ok {
+		return false
+	}
+
+	headElement := clients.Front()
+
+	for nil != headElement {
+		cn, ok := headElement.Value.(*ClientNode)
+		if !ok {
+			continue
+		}
+
+		if cn == client {
+			clients.Remove(headElement)
+			return true
+		}
+		headElement = headElement.Next()
+	}
+
+	return false
+}
+
+func getClientsFromClientUserMap(uid uint32) *list.List {
+	clients, ok := clientUserMap[uid]
+	if !ok {
+		return nil
+	}
+	return clients
 }
 
 func processEventFromClient(evt *tcpnetwork.ConnEvent) {
@@ -88,7 +132,7 @@ func onEventFromClientDisconnected(evt *tcpnetwork.ConnEvent) {
 			return
 		}
 		delete(clientNodeMap, cn.clientConnId)
-		delete(clientUserMap, cn.uid)
+		removeClientFromClientUserMap(cn)
 	}
 }
 
@@ -129,7 +173,7 @@ func onEventFromClientData(evt *tcpnetwork.ConnEvent) {
 				return
 			}
 
-			clientUserMap[user.uid] = user
+			addClientToClientUserMap(user)
 			syncPlayerHumBaseData(evt.Conn, user)
 		}
 		return
@@ -183,7 +227,8 @@ func onCreateHumReq(conn *tcpnetwork.Connection, client *ClientNode, pb *protoco
 	//	Close
 	defer g_procMap["CloseHumSave"].Call(filehandle)
 	// role name exists ?
-	if dbUserNameExistV2(g_DBUser, int(client.gsServerId), pb.GetName()) {
+	//if dbUserNameExistV2(g_DBUser, int(client.gsServerId), pb.GetName()) {
+	if dbUserNameExist(g_DBUser, pb.GetName()) {
 		sendQuickMessage(conn, 4, 0)
 		return
 	}
@@ -206,7 +251,8 @@ func onCreateHumReq(conn *tcpnetwork.Connection, client *ClientNode, pb *protoco
 		sendProto(conn, uint32(protocol.LSOp_CreateHumRsp), &ntf)
 
 		//	Add user name
-		if !dbAddUserNameV2(g_DBUser, client.uid, int(client.gsServerId), pb.GetName()) {
+		//if !dbAddUserNameV2(g_DBUser, client.uid, int(client.gsServerId), pb.GetName()) {
+		if !dbAddUserNameByUid(g_DBUser, client.uid, pb.GetName()) {
 			sendQuickMessage(conn, 6, 0)
 		}
 	} else {
@@ -236,11 +282,13 @@ func onDelHumReq(conn *tcpnetwork.Connection, client *ClientNode, pb *protocol.M
 	}
 
 	//	remove name from db
-	if !dbRemoveUserNameV2(g_DBUser, client.uid, int(client.gsServerId), pb.GetName()) {
+	//if !dbRemoveUserNameV2(g_DBUser, client.uid, int(client.gsServerId), pb.GetName()) {
+	if !dbRemoveUserNameByUid(g_DBUser, client.uid, pb.GetName()) {
 		//sendQuickMessage(conn, 5, 0)
 		seelog.Error("Failed to remove user name from role_name")
 	}
-	if !dbRemoveUserRankInfoV2(g_DBUser, client.gsServerId, pb.GetName()) {
+	//if !dbRemoveUserRankInfoV2(g_DBUser, client.gsServerId, pb.GetName()) {
+	if !dbRemoveUserRankInfo(g_DBUser, pb.GetName()) {
 		seelog.Error("Failed to remove user name from rank_info")
 	}
 	var rsp protocol.MDelHumRsp
@@ -253,6 +301,15 @@ func onLoginGame(conn *tcpnetwork.Connection, client *ClientNode, pb *protocol.M
 		//	invalid server id
 		sendQuickMessage(conn, 7, 0)
 		return
+	}
+
+	//	already in other servers
+	prevServerId := dbGetPlayerOnlineServerId(g_DBUser, client.uid)
+	if 0 != prevServerId {
+		if prevServerId != client.gsServerId {
+			seelog.Warn("Relogin, prev serverid:", prevServerId, " serverid:", client.gsServerId)
+			return
+		}
 	}
 
 	gs, ok := serverNodeMap[client.gsServerId]
@@ -380,6 +437,12 @@ func onLoginGame(conn *tcpnetwork.Connection, client *ClientNode, pb *protocol.M
 	}
 
 	sendProto(gs.conn, uint32(protocol.LSOp_PlayerLoginExtHumDataNtf), &extNtf)
+
+	//	set login status
+	err := dbAddOnlinePlayer(g_DBUser, client.uid, client.gsServerId)
+	if nil != err {
+		seelog.Error(err)
+	}
 }
 
 func syncPlayerHumBaseData(conn *tcpnetwork.Connection, client *ClientNode) {

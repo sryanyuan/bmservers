@@ -73,6 +73,11 @@ func onEventFromServerDisconnected(evt *tcpnetwork.ConnEvent) {
 		}
 		delete(serverNodeMap, sn.serverId)
 		seelog.Info("GS ", sn.serverName, " disconnected , address : ", sn.exposeAddress)
+
+		if sn.serverId != 0 {
+			//	remove all online players
+			dbRemoveOnlinePlayerByServerId(g_DBUser, sn.serverId)
+		}
 	}
 }
 
@@ -137,7 +142,8 @@ func onEventFromServerData(evt *tcpnetwork.ConnEvent) {
 		seelog.Info("Server [", user.serverId, "] register success")
 
 		//	send rankInfo data
-		rankListData := getPlayerRankListV2(user.serverId)
+		//rankListData := getPlayerRankListV2(user.serverId)
+		rankListData := getPlayerRankList()
 		var rankNtf protocol.MSyncPlayerRankNtf
 		rankNtf.Data = proto.String(rankListData)
 		sendProto(evt.Conn, uint32(protocol.LSOp_SyncPlayerRankNtf), &rankNtf)
@@ -177,6 +183,10 @@ func onEventFromServerData(evt *tcpnetwork.ConnEvent) {
 				if pb.GetAccessToken() != client.accessToken {
 					seelog.Error("Client access token verify failed, UID : ", client.uid, " token:", pb.GetAccessToken(), " wanted:", client.accessToken)
 				} else {
+					if client.gsServerId != 0 {
+						seelog.Error("Client already login ???")
+						return
+					}
 					client.gsConnId = pb.GetGID()
 					client.connCode = pb.GetConnCode()
 					client.gsServerId = user.serverId
@@ -231,6 +241,25 @@ func onEventFromServerData(evt *tcpnetwork.ConnEvent) {
 			}
 
 			SavePlayerExtData(&pb)
+		}
+	case protocol.LSOp_PlayerDisconnectedNtf:
+		{
+			var pb protocol.MPlayerDisconnectedNtf
+			if err := proto.Unmarshal(evt.Data[4:], &pb); nil != err {
+				seelog.Error("Failed to unmarshal protobuf : ", op)
+				evt.Conn.Close()
+				return
+			}
+
+			client, ok := clientNodeMap[pb.GetLID()]
+			if !ok {
+				return
+			}
+			if 0 == client.uid {
+				return
+			}
+			//	remove online player info
+			dbRemoveOnlinePlayerByUID(g_DBUser, client.uid)
 		}
 	default:
 		{

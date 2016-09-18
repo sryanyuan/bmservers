@@ -113,6 +113,13 @@ func main() {
 	}
 	defer g_DBUser.Close()
 
+	//	reset all online players
+	err = dbRemoveAllOnlinePlayer(g_DBUser)
+	if nil != err {
+		seelog.Error(err)
+		return
+	}
+
 	//	Initialize bug report database
 	g_DBCrashReport = initDatabaseCrashReport("./login/crashreport.db")
 

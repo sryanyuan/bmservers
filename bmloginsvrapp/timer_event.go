@@ -19,7 +19,8 @@ func UpdateTimerEvent() {
 		if nil != g_DBUser {
 			var rankNtf protocol.MSyncPlayerRankNtf
 			for _, gs := range serverNodeMap {
-				rankNtf.Data = proto.String(getPlayerRankListV2(gs.serverId))
+				//rankNtf.Data = proto.String(getPlayerRankListV2(gs.serverId))
+				rankNtf.Data = proto.String(getPlayerRankList())
 				sendProto(gs.conn, uint32(protocol.LSOp_SyncPlayerRankNtf), &rankNtf)
 			}
 		}

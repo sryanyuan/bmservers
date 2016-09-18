@@ -84,7 +84,7 @@ func initDatabaseUserV2(path string) *sql.DB {
 
 	//	check player rank
 	sqlexpr = `
-			CREATE TABLE IF NOT EXISTS player_rank (id integer primary key, uid integer, server_id integer, name varchar(21), job integer, level integer, expr integer, power integer)
+			CREATE TABLE IF NOT EXISTS player_rank (id integer primary key, uid integer, name varchar(21), job integer, level integer, expr integer, power integer)
 			`
 	_, err = db.Exec(sqlexpr)
 	if err != nil {
@@ -129,6 +129,17 @@ func initDatabaseUserV2(path string) *sql.DB {
 	//	check web_user
 	sqlexpr = `
 		CREATE TABLE IF NOT EXISTS web_user (uid integer primary key, user_name VARCHAR(20) UNIQUE, password VARCHAR(64), permission INTEGER, mail VARCHAR(64))
+	`
+	_, err = db.Exec(sqlexpr)
+	if err != nil {
+		seelog.Error("Failed to create new table,err:", err)
+		db.Close()
+		return nil
+	}
+
+	//	check role_name
+	sqlexpr = `
+		CREATE TABLE IF NOT EXISTS online_player (id integer primary key, uid integer, server_id integer)
 	`
 	_, err = db.Exec(sqlexpr)
 	if err != nil {
@@ -463,4 +474,47 @@ func dbGetUserRankInfoOrderByLevelV2(db *sql.DB, serverId int, limit int, job in
 	}
 
 	return ret[:index]
+}
+
+func dbRemoveAllOnlinePlayer(db *sql.DB) error {
+	_, err := db.Exec("DELETE FROM online_player")
+	return err
+}
+
+func dbRemoveOnlinePlayerByServerId(db *sql.DB, serverId int) error {
+	_, err := db.Exec("DELETE FROM online_player WHERE server_id = ?", serverId)
+	return err
+}
+
+func dbRemoveOnlinePlayerByUID(db *sql.DB, uid uint32) error {
+	_, err := db.Exec("DELETE FROM online_player WHERE uid = ?", uid)
+	return err
+}
+
+func dbAddOnlinePlayer(db *sql.DB, uid uint32, serverId int) error {
+	_, err := db.Exec("INSERT INTO online_player values (null, ?, ?)", uid, serverId)
+	return err
+}
+
+func dbIsPlayerOnline(db *sql.DB, uid uint32, serverId int) bool {
+	row := db.QueryRow("SELECT COUNT(*) FROM online_player WHERE uid = ? AND server_id = ?", uid, serverId)
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false
+		}
+	}
+
+	return true
+}
+
+func dbGetPlayerOnlineServerId(db *sql.DB, uid uint32) int {
+	row := db.QueryRow("SELECT server_id FROM online_player WHERE uid = ?", uid)
+	var serverId int
+	err := row.Scan(&serverId)
+	if err != nil {
+		return 0
+	}
+	return serverId
 }
