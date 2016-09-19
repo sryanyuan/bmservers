@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/axgle/mahonia"
 	_ "github.com/mattn/go-sqlite3"
@@ -731,6 +732,12 @@ func dbInsertUserDonateInfo(db *sql.DB, info *UserDonateInfo) bool {
 	return true
 }
 
+func dbInsertUserDonateInfoEx(db *sql.DB, info *UserDonateInfo) error {
+	expr := "insert into userdonate values(" + strconv.FormatUint(uint64(info.uid), 10) + "," + strconv.FormatUint(uint64(info.donate), 10) + "," + strconv.FormatUint(uint64(info.lastdonatetime), 10) + "," + strconv.FormatUint(uint64(info.expiretime), 10) + ")"
+	_, err := db.Exec(expr)
+	return err
+}
+
 func dbGetUserDonateInfo(db *sql.DB, uid uint32, info *UserDonateInfo) bool {
 	if nil == db {
 		return false
@@ -755,6 +762,52 @@ func dbGetUserDonateInfo(db *sql.DB, uid uint32, info *UserDonateInfo) bool {
 	}
 
 	return fetched
+}
+
+func dbIncUserDonateInfoEx(db *sql.DB, uid uint32, donateMoney int, donateOrderId string) error {
+	//	先查找订单号是否已被记录
+	if dbIsUserDonateHistoryExists(db, donateOrderId) {
+		return fmt.Errorf("donate order id already been used")
+	}
+
+	//	添加记录
+	history := &UserDonateHistory{}
+	history.uid = uid
+	history.donatetime = int(time.Now().Unix())
+	history.donate = donateMoney
+	history.donateorderid = donateOrderId
+	if !dbInsertUserDonateHistory(db, history) {
+		return fmt.Errorf("failed to insert donate history ", history)
+	}
+
+	if !dbIsUserDonateExists(db, uid) {
+		//	new record
+		info := &UserDonateInfo{}
+		info.uid = uid
+		info.donate = int32(donateMoney)
+		info.lastdonatetime = int(time.Now().Unix())
+		info.expiretime = 0
+
+		return dbInsertUserDonateInfoEx(db, info)
+	} else {
+		//	update record
+		info := &UserDonateInfo{}
+		if !dbGetUserDonateInfo(db, uid, info) {
+			return fmt.Errorf("Can't get donate info")
+		}
+		info.donate = int32(dbGetUserDonateHistorySum(db, uid))
+		info.lastdonatetime = int(time.Now().Unix())
+		expr := "update userdonate set donate=" + strconv.FormatUint(uint64(info.donate), 10) + ", lastdonatetime=" + strconv.FormatUint(uint64(info.lastdonatetime), 10) + ", expiretime=" + strconv.FormatUint(uint64(info.expiretime), 10) + " where uid=" + strconv.FormatUint(uint64(uid), 10)
+
+		_, err := db.Exec(expr)
+		if err != nil {
+			seelog.Errorf("Error on executing expression[%s] Error[%s]",
+				expr, err.Error())
+			return err
+		}
+
+		return nil
+	}
 }
 
 func dbIncUserDonateInfo(db *sql.DB, uid uint32, donateMoney int, donateOrderId string) bool {
@@ -940,7 +993,6 @@ type ExportUserAccountInfo struct {
 	Uid      uint32
 	Mail     string
 	Password string
-	ServerId int
 }
 
 func dbGetUserAccountInfo(db *sql.DB, account string, info *UserAccountInfo) (bool, error) {

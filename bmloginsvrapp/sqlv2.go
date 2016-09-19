@@ -285,30 +285,11 @@ func dbAddUserNameV2(db *sql.DB, uid uint32, serverId int, name string) bool {
 	return false
 }
 
-func dbGetUserAccountInfoByName(db *sql.DB, name string) ([]*ExportUserAccountInfo, error) {
-	rows, err := db.Query("SELECT uid, server_id FROM role_name WHERE name0 = ? or name1 = ? or name2 = ?",
+func dbGetUserAccountInfoByName(db *sql.DB, name string, info *ExportUserAccountInfo) error {
+	row := db.QueryRow("SELECT uid, account, password, mail FROM useraccount WHERE name0 = ? or name1 = ? or name2 = ?",
 		name, name, name)
-	if nil != err {
-		return nil, err
-	}
-	defer rows.Close()
 
-	resultSet := make([]*ExportUserAccountInfo, 0, 10)
-	for rows.Next() {
-		var result ExportUserAccountInfo
-		err = rows.Scan(&result.Uid, &result.ServerId)
-		if nil != err {
-			return nil, err
-		}
-		resultSet = append(resultSet, &result)
-
-		err = db.QueryRow("SELECT account, password FROM useraccount WHERE uid = ?", result.Uid).Scan(&result.Account, &result.Password)
-		if nil != err {
-			return nil, err
-		}
-	}
-
-	return resultSet, nil
+	return row.Scan(&info.Uid, &info.Account, &info.Password, &info.Mail)
 }
 
 func dbIsUserRankExistsV2(db *sql.DB, serverId int, name string) bool {

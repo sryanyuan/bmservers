@@ -8,6 +8,8 @@ var routerManagementItems = []RouterItem{
 	{"/management/index", kPermission_SuperAdmin, webManagementIndexHandler},
 	{"/management/user", kPermission_SuperAdmin, webManagementUserHandler},
 	{"/management/finduser", kPermission_SuperAdmin, ajaxManagementFindUser},
+	{"/management/adddonate", kPermission_SuperAdmin, webManagementAddDonateHandler},
+	{"/management/doadddonate", kPermission_SuperAdmin, ajaxManagementAddDonate},
 }
 
 //	index
@@ -21,6 +23,21 @@ func webManagementIndexHandler(ctx *RequestContext) {
 	ctx.w.Write(data)
 }
 
+//	adddonate
+var webManagementAddDonateTpls = []string{
+	"template/management/manage_nav.html",
+	"template/management/adddonate.html",
+}
+
+func webManagementAddDonateHandler(ctx *RequestContext) {
+	ctx.r.ParseForm()
+	uid := getFormValueInt(ctx.r, "uid", 0)
+	renderData := make(map[string]interface{})
+	renderData["UID"] = uid
+	data := renderTemplate(ctx, webManagementAddDonateTpls, renderData)
+	ctx.w.Write(data)
+}
+
 //	user
 var webManagementUserTpls = []string{
 	"template/management/manage_nav.html",
@@ -30,6 +47,53 @@ var webManagementUserTpls = []string{
 func webManagementUserHandler(ctx *RequestContext) {
 	data := renderTemplate(ctx, webManagementUserTpls, nil)
 	ctx.w.Write(data)
+}
+
+func ajaxManagementAddDonate(ctx *RequestContext) {
+	result := SignUpResult{
+		Result: 1,
+		Msg:    "No operation",
+	}
+	defer func() {
+		ctx.RenderJson(&result)
+	}()
+
+	if ctx.r.Method != "POST" {
+		result.Msg = "Invalid method"
+		return
+	}
+
+	uid := getFormValueInt(ctx.r, "user[uid]", 0)
+	if 0 == uid {
+		result.Msg = "Invalid uid"
+		return
+	}
+	orderId := getFormValueString(ctx.r, "user[orderid]")
+	if 0 == len(orderId) {
+		result.Msg = "Invalid orderid"
+		return
+	}
+	donateCount := getFormValueInt(ctx.r, "user[donate]", 0)
+	if 0 == donateCount {
+		result.Msg = "Invalid donate"
+		return
+	}
+
+	//	get user
+	var donateUser UserAccountInfo
+	findUser := dbGetUserAccountInfoByUID(g_DBUser, uint32(uid), &donateUser)
+	if !findUser {
+		result.Msg = "Can't find user"
+		return
+	}
+
+	//	insert a record
+	if err := dbIncUserDonateInfoEx(g_DBUser, uint32(uid), donateCount, orderId); nil != err {
+		result.Msg = err.Error()
+		return
+	}
+
+	result.Result = 0
 }
 
 func ajaxManagementFindUser(ctx *RequestContext) {
@@ -70,19 +134,19 @@ func ajaxManagementFindUser(ctx *RequestContext) {
 				Password: accountInfo.password,
 				Mail:     accountInfo.mail,
 			}
-			resultSet := make([]*ExportUserAccountInfo, 1, 1)
-			resultSet[0] = eAi
-			data, _ := json.Marshal(resultSet)
+			data, _ := json.Marshal(eAi)
 			result.Msg = string(data)
 			return
 		}
 	} else if len(name) != 0 {
-		users, err := dbGetUserAccountInfoByName(g_DBUser, name)
+		var userInfo ExportUserAccountInfo
+		err := dbGetUserAccountInfoByName(g_DBUser, name, &userInfo)
 		if nil != err {
 			result.Msg = err.Error()
 			return
 		}
-		data, _ := json.Marshal(users)
+		result.Result = 0
+		data, _ := json.Marshal(&userInfo)
 		result.Msg = string(data)
 		return
 	} else if len(account) != 0 {

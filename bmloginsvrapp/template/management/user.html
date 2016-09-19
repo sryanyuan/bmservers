@@ -15,7 +15,7 @@
 		<div class="col-md-10 col-md-offset-0 manage_content">
 			<div class="row">
 				<div class="col-md-2">
-					<form id="id-form-signup" class="form-horizontal " novalidate="novalidate" id="new_user" action="/management/finduser" accept-charset="UTF-8" method="post">	
+					<form id="id-form-searchuser" class="form-horizontal " novalidate="novalidate" id="new_user" action="/management/finduser" accept-charset="UTF-8" method="post">	
 						<div class="form-group" style="text-align:center;">
 							<input type="uid" class="form-control input-md" placeholder="UID" name="user[uid]"/>
 							<input type="name" class="form-control input-md" placeholder="角色名" name="user[name]"/>
@@ -28,7 +28,13 @@
 					<div id="id-signup-hint" class="alert alert-danger hidden" role="alert">
 						<strong>错误!</strong><span id="id-signup-hinttext">Nothing</span>
 					</div>
-					<div id="id-result-container">
+					<div id="id-result-container" class="alert alert-success hidden" role="alert">
+						<p>Uid:<span id="text-uid"></span>   Account:<span id="text-account"></span>   Password:<span id="text-password"></span>   Email:<span id="text-mail"></span></p>
+						<p>
+							<a id="link-adddonate" href="">
+								<button type="button" class="btn btn-sm btn-success">添加贡献</button>
+							</a>
+						</p>
 					</div>
 				</div>
 			</div>

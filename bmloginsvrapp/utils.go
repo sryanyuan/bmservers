@@ -72,32 +72,18 @@ func sendQuickMessage(conn *tcpnetwork.Connection, msgId int32, param int32) err
 }
 
 func getPlayerSaveFileHandle(client *ClientNode) uintptr {
-	return getSaveFileHandle(client.gsServerId, client.uid)
+	return getSaveFileHandle(client.uid)
 }
 
-func getSaveFileHandle(serverId int, uid uint32) uintptr {
+func getSaveFileHandle(uid uint32) uintptr {
 	if 0 == uid {
 		return 0
 	}
-	if 0 == serverId {
-		return 0
-	}
 
-	path := fmt.Sprintf("./login/gs_%d", serverId)
-	if !PathExist(path) {
-		err := os.Mkdir(path, os.ModeDir)
-		if err != nil {
-			seelog.Error("Cant't create user directory.Error:", err)
-			return 0
-		}
-	}
-	path += fmt.Sprintf("/%d", uid)
-	if !PathExist(path) {
-		err := os.Mkdir(path, os.ModeDir)
-		if err != nil {
-			seelog.Error("Cant't create user directory.Error:", err)
-			return 0
-		}
+	path := fmt.Sprintf("./login/%d", uid)
+	if err := os.MkdirAll(path, os.ModeDir); nil != err {
+		seelog.Error(err)
+		return 0
 	}
 
 	//	create new save file if not exists

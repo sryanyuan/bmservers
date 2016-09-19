@@ -5,11 +5,8 @@ import "C"
 
 import (
 	"encoding/binary"
-	"fmt"
 
 	"unsafe"
-
-	"os"
 
 	"github.com/cihub/seelog"
 	"github.com/golang/protobuf/proto"
@@ -148,14 +145,14 @@ func onEventFromServerData(evt *tcpnetwork.ConnEvent) {
 		rankNtf.Data = proto.String(rankListData)
 		sendProto(evt.Conn, uint32(protocol.LSOp_SyncPlayerRankNtf), &rankNtf)
 
-		//	create directory
-		path := fmt.Sprintf("./login/gs_%d", user.serverId)
+		//	create directory, share login directory
+		/*path := fmt.Sprintf("./login/gs_%d", user.serverId)
 		if !PathExist(path) {
 			err := os.Mkdir(path, os.ModeDir)
 			if err != nil {
 				seelog.Error("Cant't create user directory.Error:", err)
 			}
-		}
+		}*/
 
 		return
 	}
@@ -197,18 +194,6 @@ func onEventFromServerData(evt *tcpnetwork.ConnEvent) {
 				syncPlayerHumBaseData(evt.Conn, client)
 			}
 		}
-	case protocol.LSOp_SavePlayerDataReq:
-		{
-			//	save player data
-			var pb protocol.MSavePlayerDataReq
-			if err := proto.Unmarshal(evt.Data[4:], &pb); nil != err {
-				seelog.Error("Failed to unmarshal protobuf : ", op)
-				evt.Conn.Close()
-				return
-			}
-
-			SavePlayerData(&pb)
-		}
 	case protocol.LSOp_UpdatePlayerRankReq:
 		{
 			//	update player rank
@@ -229,6 +214,18 @@ func onEventFromServerData(evt *tcpnetwork.ConnEvent) {
 			if !dbUpdateUserRankInfoV2(g_DBUser, &rankInfo) {
 				seelog.Error("Failed to insert player rank info")
 			}
+		}
+	case protocol.LSOp_SavePlayerDataReq:
+		{
+			//	save player data
+			var pb protocol.MSavePlayerDataReq
+			if err := proto.Unmarshal(evt.Data[4:], &pb); nil != err {
+				seelog.Error("Failed to unmarshal protobuf : ", op)
+				evt.Conn.Close()
+				return
+			}
+
+			SavePlayerData(&pb)
 		}
 	case protocol.LSOp_SavePlayerExtDataReq:
 		{
@@ -272,7 +269,7 @@ func SavePlayerExtData(pb *protocol.MSavePlayerExtDataReq) {
 	seelog.Debug(pb.GetName(), " request to save extend data.ext index:", pb.GetExtIndex())
 
 	//	Create save file
-	var filehandle uintptr = getSaveFileHandle(int(pb.GetServerID()), pb.GetUID())
+	var filehandle uintptr = getSaveFileHandle(pb.GetUID())
 	if 0 == filehandle {
 		seelog.Error("Failed to get file handle : ", pb)
 		return
@@ -292,7 +289,7 @@ func SavePlayerExtData(pb *protocol.MSavePlayerExtDataReq) {
 
 func SavePlayerData(pb *protocol.MSavePlayerDataReq) {
 	seelog.Debug(pb.GetName(), " request to save data")
-	var filehandle uintptr = getSaveFileHandle(int(pb.GetServerID()), pb.GetUID())
+	var filehandle uintptr = getSaveFileHandle(pb.GetUID())
 	if 0 == filehandle {
 		seelog.Error("Failed to get file handle : ", pb)
 		return
