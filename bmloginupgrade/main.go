@@ -32,16 +32,6 @@ func repairDB(path string) {
 	}
 	defer dbUser.Close()
 
-	//	alter player_rank
-	_, err = dbUser.Exec("ALTER TABLE player_rank ADD COLUMN server_id integer NOT NULL DEFAULT 0")
-	if nil != err {
-		log.Println("SQL:", err)
-	}
-	//	update server_id
-	_, err = dbUser.Exec("UPDATE player_rank SET server_id = 1 WHERE server_id = 0")
-	if nil != err {
-		log.Println("SQL:", err)
-	}
 	//	alter useraccount
 	_, err = dbUser.Exec("ALTER TABLE useraccount ADD COLUMN mail VARCHAR(64) NOT NULL DEFAULT ''")
 	if nil != err {
