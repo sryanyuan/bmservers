@@ -28,6 +28,7 @@ enum LSOp {
 	CreateHumRsp = 11109;
 	DelHumRsp = 11110;
 	HeartBeatNtf = 11111;
+	DonateAddNtf = 11112;
 	//	C<->GS
 	RegisterClientReq = 11200;
 	RegisterClientRsp = 11201;
@@ -192,6 +193,11 @@ message MCreateHumRsp {
 
 message MDelHumRsp {
 	required string Name = 1;
+}
+
+message MDonateAddNtf {
+	required int32 DonateCount = 1;
+	required int32 DonateLeft = 2;
 }
 
 //	C<->S

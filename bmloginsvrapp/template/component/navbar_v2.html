@@ -9,23 +9,26 @@
                 <span class="icon-bar"></span>
             </button>
             <a href="/" class="navbar-brand">
-				BM Management
+				BM ADMIN
 			</a>
         </div>
         <div class="collapse navbar-collapse navbar-ex1-collapse">
 			<!--left bar-->
             <ul class="nav navbar-nav">
                 <li>
-					<a href="/">主页</a>
+					<a href="/">HOME</a>
 				</li>
 				<li>
-					<a href="/account/regaccount">注册账户</a>
+					<a href="/account/regaccount">REIGSTER</a>
 				</li>
 				<li>
-					<a href="/account/modifypassword">修改密码</a>
+					<a href="/account/modifypassword">CHANGE</a>
 				</li>
 				<li>
-					<a href="/about">关于</a>
+					<a href="/account/modifypassword">SERVERS</a>
+				</li>
+				<li>
+					<a href="/about">ABOUT</a>
 				</li>
             </ul>
             
@@ -33,10 +36,10 @@
             <ul id="id-navbar-right" class="nav navbar-nav navbar-right">
 				<li class="dropdown">
 				{{if eq .user.Uid 0}}
-					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-user"></i> 游客 </i><i class="fa fa-caret-down"></i></a>
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-user"></i> GUEST </i><i class="fa fa-caret-down"></i></a>
 					<ul class="dropdown-menu">
 						<li>
-							<a href="/signin"><i class="fa fa-sign-in"></i>&nbsp;&nbsp;登陆</a>
+							<a href="/signin"><i class="fa fa-sign-in"></i>&nbsp;&nbsp;LOGIN</a>
 						</li>
 					</ul>
 				{{else}}
@@ -44,13 +47,13 @@
 						<img alt="{{.user.UserName}}" class="avatar img-rounded" height="32" src="/static/images/male.png" width="32" />
 					<i class="fa fa-caret-down"></i></a>
 						<ul id="id_loginmenu" class="dropdown-menu">
-							<li class="dropdown-header">欢迎 <span style="font-weight:bold;">{{.user.UserName}}</span></li>
+							<li class="dropdown-header">WELCOME <span style="font-weight:bold;">{{.user.UserName}}</span></li>
 							<li role="separator" class="divider"></li>
 							<li>
-								<a href="/management/index"><i class="fa fa-cog"></i>&nbsp;&nbsp;用户中心</a>
+								<a href="/management/index"><i class="fa fa-cog"></i>&nbsp;&nbsp;MANAGEMENT</a>
 							</li>
 							<li>
-								<a href="/signout"><i class="fa fa-sign-out"></i>&nbsp;&nbsp;登出</a>
+								<a href="/signout"><i class="fa fa-sign-out"></i>&nbsp;&nbsp;LOGOUT</a>
 							</li>
 						</ul>
 				{{end}}

@@ -192,6 +192,7 @@ var routerItems = []RouterItem{
 	{"/account/modifypassword", kPermission_Guest, webModifyPasswordHandler},
 	{"/account/modifypasswordsuccess", kPermission_Guest, webModifyPasswordSuccessHandler},
 	{"/about", kPermission_Guest, webAboutHandler},
+	{"/servers", kPermission_Guest, webServersHandler},
 }
 
 func fileHandler(w http.ResponseWriter, r *http.Request) {

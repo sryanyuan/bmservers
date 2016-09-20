@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+
+	"github.com/cihub/seelog"
 )
 
 var routerManagementItems = []RouterItem{
@@ -10,6 +12,7 @@ var routerManagementItems = []RouterItem{
 	{"/management/finduser", kPermission_SuperAdmin, ajaxManagementFindUser},
 	{"/management/adddonate", kPermission_SuperAdmin, webManagementAddDonateHandler},
 	{"/management/doadddonate", kPermission_SuperAdmin, ajaxManagementAddDonate},
+	{"/management/viewdonate", kPermission_SuperAdmin, webManagementViewDonateHandler},
 }
 
 //	index
@@ -20,6 +23,34 @@ var webManagementIndexTpls = []string{
 
 func webManagementIndexHandler(ctx *RequestContext) {
 	data := renderTemplate(ctx, webManagementIndexTpls, nil)
+	ctx.w.Write(data)
+}
+
+//	view donate
+var webManagementViewDonateTpls = []string{
+	"template/management/manage_nav.html",
+	"template/management/viewdonate.html",
+}
+
+func webManagementViewDonateHandler(ctx *RequestContext) {
+	ctx.r.ParseForm()
+	uid := getFormValueInt(ctx.r, "uid", 0)
+	renderData := make(map[string]interface{})
+	renderData["UID"] = uid
+
+	var donateHistoryList []*UserDonateHistoryExpose
+	if 0 == uid {
+		donateHistoryList = make([]*UserDonateHistoryExpose, 0, 1)
+	} else {
+		var err error
+		donateHistoryList, err = dbGetUserDonateHistoryList(g_DBUser, uint32(uid))
+		if nil != err {
+			seelog.Error(err)
+		}
+	}
+	renderData["DonateList"] = donateHistoryList
+
+	data := renderTemplate(ctx, webManagementViewDonateTpls, renderData)
 	ctx.w.Write(data)
 }
 
@@ -63,6 +94,7 @@ func ajaxManagementAddDonate(ctx *RequestContext) {
 		return
 	}
 
+	ctx.r.ParseForm()
 	uid := getFormValueInt(ctx.r, "user[uid]", 0)
 	if 0 == uid {
 		result.Msg = "Invalid uid"
@@ -94,6 +126,8 @@ func ajaxManagementAddDonate(ctx *RequestContext) {
 	}
 
 	result.Result = 0
+
+	//	push tcp event
 }
 
 func ajaxManagementFindUser(ctx *RequestContext) {

@@ -22,6 +22,22 @@ type ServerNode struct {
 	conn          *tcpnetwork.Connection
 }
 
+type ServerNodeExpose struct {
+	ServerName    string
+	ExposeAddress string
+}
+
+//	const
+const (
+	kTCPInternalEvent_None = tcpnetwork.KConnEvent_Total + iota
+	kTCPInternalEvent_FetchServerList
+)
+
+type internalEventFetchServerList struct {
+	servers []*ServerNodeExpose
+	done    chan struct{}
+}
+
 //	variables
 var (
 	serverNodeSeed int
@@ -46,6 +62,10 @@ func processEventFromServer(evt *tcpnetwork.ConnEvent) {
 	case tcpnetwork.KConnEvent_Data:
 		{
 			onEventFromServerData(evt)
+		}
+	case kTCPInternalEvent_FetchServerList:
+		{
+			onInternalEventFetchServerList(evt)
 		}
 	}
 }
@@ -263,6 +283,25 @@ func onEventFromServerData(evt *tcpnetwork.ConnEvent) {
 			seelog.Warn("Unknown opcode : ", opcode)
 		}
 	}
+}
+
+func onInternalEventFetchServerList(evt *tcpnetwork.ConnEvent) {
+	event, ok := evt.Userdata.(*internalEventFetchServerList)
+	if !ok {
+		seelog.Error("Failed to process internalEventFetchServerList")
+		return
+	}
+
+	servers := make([]*ServerNodeExpose, 0, len(serverNodeMap))
+	for _, v := range serverNodeMap {
+		var server ServerNodeExpose
+		server.ExposeAddress = v.exposeAddress
+		server.ServerName = v.serverName
+		servers = append(servers, &server)
+	}
+	event.servers = servers
+
+	close(event.done)
 }
 
 func SavePlayerExtData(pb *protocol.MSavePlayerExtDataReq) {

@@ -71,3 +71,7 @@ body {
     transform: translate(60px);
     text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.8), 2px 2px 3px rgba(180, 151, 151, 0.3);
 }
+
+#home-text h1 {
+	color:white;
+}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"runtime"
 	"strconv"
 	"time"
 )
@@ -28,6 +29,7 @@ var tplFuncMap = template.FuncMap{
 	"minusInt":          tplfn_minusInt,
 	"addInt":            tplfn_addInt,
 	"formatDate":        tplfn_formatDate,
+	"formatDateTime":    tplfn_formatDateTime,
 }
 
 func tplfn_getprocesstime(tm time.Time) string {
@@ -74,6 +76,11 @@ func tplfn_addInt(val int, step int) int {
 func tplfn_formatDate(tm int64) string {
 	timeVal := time.Unix(tm, 0)
 	return timeVal.Format("2006-01-02")
+}
+
+func tplfn_formatDateTime(tm int64) string {
+	timeVal := time.Unix(tm, 0)
+	return timeVal.Format("2006-01-02 15:04:05")
 }
 
 func init() {
@@ -134,6 +141,7 @@ func renderTemplate(ctx *RequestContext, fileNames []string, data map[string]int
 
 	data["url"] = ctx.r.URL.String()
 	data["user"] = ctx.user
+	data["goversion"] = runtime.Version()
 
 	//	get render data
 	return parseTemplate(fileNames, layoutFiles, data)

@@ -922,6 +922,33 @@ type UserDonateHistory struct {
 	donateorderid string
 }
 
+type UserDonateHistoryExpose struct {
+	UID           uint32
+	Donate        int
+	DonateTime    int64
+	DonateOrderID string
+}
+
+func dbGetUserDonateHistoryList(db *sql.DB, uid uint32) ([]*UserDonateHistoryExpose, error) {
+	results := make([]*UserDonateHistoryExpose, 0, 10)
+	rows, err := db.Query("SELECT uid, donate, donatetime, donateorderid FROM userdonatehistory WHERE uid = ?", uid)
+	if nil != err {
+		return results, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var item UserDonateHistoryExpose
+		err = rows.Scan(&item.UID, &item.Donate, &item.DonateTime, &item.DonateOrderID)
+		if nil != err {
+			panic(err)
+		}
+		results = append(results, &item)
+	}
+
+	return results, nil
+}
+
 func dbIsUserDonateHistoryExists(db *sql.DB, donateOrderId string) bool {
 	expr := "select count(*) as cnt from userdonatehistory where donateorderid='" + donateOrderId + "'"
 	rows, err := db.Query(expr)

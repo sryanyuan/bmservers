@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"crypto/md5"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/cihub/seelog"
 	"github.com/dchest/captcha"
 	"github.com/gorilla/mux"
+	"github.com/sryanyuan/tcpnetwork"
 )
 
 func startWebServer(addr string) {
@@ -384,5 +386,39 @@ var webAboutRenderTpls = []string{
 
 func webAboutHandler(ctx *RequestContext) {
 	data := renderTemplate(ctx, webAboutRenderTpls, nil)
+	ctx.w.Write(data)
+}
+
+//	servers
+var webServersTpls = []string{
+	"template/servers.html",
+}
+
+func webServersHandler(ctx *RequestContext) {
+	renderData := make(map[string]interface{})
+	//	get server list from tcp routine
+	var event internalEventFetchServerList
+	event.done = make(chan struct{}, 1)
+	var tcpEvent tcpnetwork.ConnEvent
+	tcpEvent.EventType = kTCPInternalEvent_FetchServerList
+	tcpEvent.Userdata = &event
+
+	g_ServerS.Push(&tcpEvent)
+
+	select {
+	case <-event.done:
+		{
+			//	nothing
+		}
+	case <-time.After(time.Millisecond * 100):
+		{
+			//	timeout
+			seelog.Error("Timeout on internalEventFetchServerList")
+			event.servers = make([]*ServerNodeExpose, 0, 0)
+		}
+	}
+	renderData["ServerList"] = event.servers
+
+	data := renderTemplate(ctx, webServersTpls, renderData)
 	ctx.w.Write(data)
 }

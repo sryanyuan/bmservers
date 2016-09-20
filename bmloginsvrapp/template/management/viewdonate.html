@@ -1,0 +1,27 @@
+{{define "Title"}}管理面板{{end}}
+{{define "importcss"}}
+<link href="/static/css/management.css" rel="stylesheet" />
+{{end}}
+{{define "importjs"}}
+<script src="/static/js/management.js"></script>
+{{end}}
+{{define "content"}}
+<!--banner-->
+<div id="id-content" class="container theme-showcase" role="main">
+	<div class="row">
+		<div class="col-md-2 col-md-offset-0">
+			{{template "manage_nav"}}
+		</div>
+		<div class="col-md-6 col-md-offset-2 manage_content">
+			<div id="id-signup-hint" class="alert alert-danger hidden" role="alert">
+				<strong>结果：</strong><span id="id-signup-hinttext">Nothing</span>
+			</div>
+			{{range .DonateList}}
+				<div class="alert alert-success" role="alert">
+					<strong>UID：</strong>{{.UID}}&nbsp; &nbsp; <strong>贡献：</strong>{{.Donate}}&nbsp; &nbsp; <strong>时间：</strong>{{formatDateTime .DonateTime}}&nbsp; &nbsp; <strong>订单号：</strong>{{.DonateOrderID}}
+				</div>
+			{{end}}
+		</div>
+	</div>
+</div>
+{{end}}

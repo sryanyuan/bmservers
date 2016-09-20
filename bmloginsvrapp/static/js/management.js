@@ -40,6 +40,7 @@ $(document).ready(function(){
 						$("#text-password").html(obj.Password);
 						$("#text-mail").html(obj.Mail);
 						$("#link-adddonate").attr("href", "/management/adddonate?uid="+obj.Uid);
+						$("#link-viewdonate").attr("href", "/management/viewdonate?uid="+obj.Uid);
 					}
 				}
 			}).error(function(e){
@@ -73,6 +74,9 @@ $(document).ready(function(){
 				if(null != ret.Result){
 					if(0 != ret.Result){
 						signUpHint.removeClass("hidden");
+						signUpHint.removeClass("alert-danger");
+						signUpHint.removeClass("alert-success");
+						signUpHint.addClass("alert-danger");
 						$("#id-signup-hinttext").html(ret.Msg);
 						
 						if (!container.hasClass("hidden")) {
@@ -80,10 +84,11 @@ $(document).ready(function(){
 						}
 					} else {
 						//	insert dom
-						if (!signUpHint.hasClass("hidden")) {
-							signUpHint.addClass("hidden");
-						}
-						alert("添加成功");
+						signUpHint.removeClass("hidden");
+						signUpHint.removeClass("alert-danger");
+						signUpHint.removeClass("alert-success");
+						signUpHint.addClass("alert-success");
+						$("#id-signup-hinttext").html("操作成功！");
 					}
 				}
 			}).error(function(e){
