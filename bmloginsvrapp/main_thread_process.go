@@ -339,12 +339,7 @@ func ProcessMThreadMsg(msg *MThreadMsg) {
 			switch ud.Type {
 			case kScheduleType_GsSchedule:
 				{
-					gs := g_ServerList.GetUser(uint32(ud.Data))
-					if nil == gs {
-						return
-					}
 
-					gs.SendUserMsg(loginopstart+34, uint32(msg.WParam))
 				}
 			}
 		}

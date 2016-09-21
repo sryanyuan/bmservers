@@ -37,8 +37,6 @@ var (
 	g_ServerC        *tcpnetwork.TCPNetwork
 	g_ServerSSeed    int
 	g_ServerCSeed    int
-	g_UserList       *UserInfoList
-	g_ServerList     *UserInfoList
 	g_CtrlCh         chan uint8
 	g_DBUser         *sql.DB
 	g_DBCrashReport  *sql.DB
@@ -67,7 +65,7 @@ func main() {
 	var err error
 	logFilePath := "./conf/log.conf"
 	var logger seelog.LoggerInterface
-	logFileExist, _ := pathExists(logFilePath)
+	logFileExist := pathExist(logFilePath)
 
 	if !logFileExist {
 		//	using the default setting
@@ -101,7 +99,7 @@ func main() {
 
 	seelog.Info("BackMIR Login Server started.")
 	//	Initialize directory
-	if !PathExist("./login") {
+	if !pathExist("./login") {
 		os.Mkdir("./login", os.ModeDir)
 	}
 
@@ -130,17 +128,11 @@ func main() {
 	}
 
 	//	for server
-	g_ServerList = &UserInfoList{
-		allusers: make(map[uint32]IUserInterface),
-	}
 	g_ServerS = tcpnetwork.NewTCPNetwork(1024, tcpnetwork.NewStreamProtocol4())
 
 	//	for client
 	g_ServerC = tcpnetwork.NewTCPNetwork(1024, tcpnetwork.NewStreamProtocol4())
 	g_ServerC.SetReadTimeoutSec(60)
-	g_UserList = &UserInfoList{
-		allusers: make(map[uint32]IUserInterface),
-	}
 
 	//	http server
 	if httpAddr != nil &&
@@ -188,12 +180,10 @@ func main() {
 		select {
 		case evt := <-g_ServerS.GetEventQueue():
 			{
-				//ProcessServerSEvent(evt)
 				processEventFromServer(evt)
 			}
 		case evt := <-g_ServerC.GetEventQueue():
 			{
-				//ProcessServerCEvent(evt)
 				processEventFromClient(evt)
 			}
 		case evt := <-g_Redis.outputChan:
@@ -223,53 +213,11 @@ func main() {
 	releaseDllModule()
 }
 
-func ProcessServerCEvent(evt *tcpnetwork.ConnEvent) {
-	switch evt.EventType {
-	case tcpnetwork.KConnEvent_Connected:
-		{
-			HandleCConnect(evt)
-		}
-	case tcpnetwork.KConnEvent_Data:
-		{
-			HandleCMsg(evt)
-		}
-	case tcpnetwork.KConnEvent_Disconnected:
-		{
-			HandleCDisconnect(evt)
-		}
-	default:
-		{
-			seelog.Warn("Unsolved ConnEvent[evtid:", evt.EventType, "]")
-		}
-	}
-}
-
-func ProcessServerSEvent(evt *tcpnetwork.ConnEvent) {
-	switch evt.EventType {
-	case tcpnetwork.KConnEvent_Connected:
-		{
-			HandleSConnect(evt)
-		}
-	case tcpnetwork.KConnEvent_Data:
-		{
-			HandleSMsg(evt)
-		}
-	case tcpnetwork.KConnEvent_Disconnected:
-		{
-			HandleSDisconnect(evt)
-		}
-	default:
-		{
-			seelog.Warn("Unsolved ConnEvent[evtid:", evt.EventType, "]")
-		}
-	}
-}
-
 func ProcessRedisEvent(evt *RedisEvent) {
 	switch evt.CommandType {
 	case RedisEvent_SavePlayerData:
 		{
-			OfflineSaveUserData(evt.BinaryData)
+			//OfflineSaveUserData(evt.BinaryData)
 		}
 	}
 }

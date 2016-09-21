@@ -11,7 +11,7 @@ import (
 )
 
 func initDatabaseUserV2(path string) *sql.DB {
-	if !PathExist(path) {
+	if !pathExist(path) {
 		file, err := os.Create(path)
 		if err != nil {
 			seelog.Error("Can't create db file.", err)
