@@ -227,7 +227,6 @@ func onCreateHumReq(conn *tcpnetwork.Connection, client *ClientNode, pb *protoco
 	//	Close
 	defer g_procMap["CloseHumSave"].Call(filehandle)
 	// role name exists ?
-	//if dbUserNameExistV2(g_DBUser, int(client.gsServerId), pb.GetName()) {
 	if dbUserNameExist(g_DBUser, pb.GetName()) {
 		sendQuickMessage(conn, 4, 0)
 		return
@@ -251,10 +250,11 @@ func onCreateHumReq(conn *tcpnetwork.Connection, client *ClientNode, pb *protoco
 		sendProto(conn, uint32(protocol.LSOp_CreateHumRsp), &ntf)
 
 		//	Add user name
-		//if !dbAddUserNameV2(g_DBUser, client.uid, int(client.gsServerId), pb.GetName()) {
 		if !dbAddUserNameByUid(g_DBUser, client.uid, pb.GetName()) {
 			sendQuickMessage(conn, 6, 0)
 		}
+
+		syncPlayerHumBaseData(conn, client)
 	} else {
 		//	failed
 		ntf.Result = proto.Int(0)
@@ -282,18 +282,17 @@ func onDelHumReq(conn *tcpnetwork.Connection, client *ClientNode, pb *protocol.M
 	}
 
 	//	remove name from db
-	//if !dbRemoveUserNameV2(g_DBUser, client.uid, int(client.gsServerId), pb.GetName()) {
 	if !dbRemoveUserNameByUid(g_DBUser, client.uid, pb.GetName()) {
 		//sendQuickMessage(conn, 5, 0)
 		seelog.Error("Failed to remove user name from role_name")
 	}
-	//if !dbRemoveUserRankInfoV2(g_DBUser, client.gsServerId, pb.GetName()) {
 	if !dbRemoveUserRankInfo(g_DBUser, pb.GetName()) {
 		seelog.Error("Failed to remove user name from rank_info")
 	}
 	var rsp protocol.MDelHumRsp
 	rsp.Name = pb.Name
 	sendProto(conn, uint32(protocol.LSOp_DelHumRsp), &rsp)
+	syncPlayerHumBaseData(conn, client)
 }
 
 func onLoginGame(conn *tcpnetwork.Connection, client *ClientNode, pb *protocol.MLoginGameReq) {
