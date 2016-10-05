@@ -127,6 +127,7 @@ message MProtoTypeNtf {
 
 message MPlayerDisconnectedNtf {
 	required int32 LID = 1;
+	required int32 UID = 2;
 }
 
 //	C<->LS

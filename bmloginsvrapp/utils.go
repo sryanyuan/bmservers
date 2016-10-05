@@ -30,6 +30,7 @@ const (
 	kQM_NoGSAvailable       = 7
 	kQM_AccountVerifyFailed = 8
 	kQM_SaveHumDataFailed   = 9
+	kQM_Relogin             = 10
 )
 
 func pathExist(path string) bool {
