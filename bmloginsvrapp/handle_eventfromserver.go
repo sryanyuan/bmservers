@@ -165,19 +165,11 @@ func onEventFromServerData(evt *tcpnetwork.ConnEvent) {
 		rankNtf.Data = proto.String(rankListData)
 		sendProto(evt.Conn, uint32(protocol.LSOp_SyncPlayerRankNtf), &rankNtf)
 
-		//	create directory, share login directory
-		/*path := fmt.Sprintf("./login/gs_%d", user.serverId)
-		if !PathExist(path) {
-			err := os.Mkdir(path, os.ModeDir)
-			if err != nil {
-				seelog.Error("Cant't create user directory.Error:", err)
-			}
-		}*/
-
 		return
 	}
 
 	//	registered server
+	seelog.Debug("Recv server proto ", op)
 	switch op {
 	case protocol.LSOp_UserInternalVerifyReq:
 		{
@@ -268,15 +260,8 @@ func onEventFromServerData(evt *tcpnetwork.ConnEvent) {
 				return
 			}
 
-			client, ok := clientNodeMap[pb.GetLID()]
-			if !ok {
-				return
-			}
-			if 0 == client.uid {
-				return
-			}
 			//	remove online player info
-			dbRemoveOnlinePlayerByUID(g_DBUser, client.uid)
+			dbRemoveOnlinePlayerByUID(g_DBUser, uint32(pb.GetUID()), user.serverId, pb.GetLID())
 		}
 	default:
 		{

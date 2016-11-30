@@ -1306,11 +1306,11 @@ func dbRemoveUserName(db *sql.DB, account string, name string) bool {
 	return true
 }
 
-func dbRemoveUserNameByUid(db *sql.DB, uid uint32, name string) bool {
+func dbRemoveUserNameByUid(db *sql.DB, uid uint32, name string) error {
 	var info UserAccountInfo
 	ret := dbGetUserAccountInfoByUID(db, uid, &info)
 	if !ret {
-		return false
+		return fmt.Errorf("Can't get user account info")
 	}
 
 	nameindex := int(-1)
@@ -1323,7 +1323,7 @@ func dbRemoveUserNameByUid(db *sql.DB, uid uint32, name string) bool {
 	}
 
 	if nameindex == -1 {
-		return false
+		return fmt.Errorf("Can't find name index")
 	}
 
 	sqlexpr := "UPDATE useraccount SET name" + strconv.FormatInt(int64(nameindex), 10) + " = '' WHERE uid=" + strconv.Itoa(int(uid))
@@ -1331,9 +1331,9 @@ func dbRemoveUserNameByUid(db *sql.DB, uid uint32, name string) bool {
 	if err != nil {
 		seelog.Errorf("Error on executing expression[%s] Error[%s]",
 			sqlexpr, err.Error())
-		return false
+		return err
 	}
-	return true
+	return nil
 }
 
 func dbGetUserUidByName(db *sql.DB, name string) uint32 {

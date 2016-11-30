@@ -67,10 +67,10 @@ func getPlayerRankListV2(serverId int) string {
 	rankList := ""
 
 	var rankData PlayerRankList
-	rankData.RankLevel = dbGetUserRankInfoOrderByLevelV2(g_DBUser, serverId, 10, -1)
-	rankData.RankZhanShi = dbGetUserRankInfoOrderByPowerV2(g_DBUser, serverId, 10, 0)
-	rankData.RankFaShi = dbGetUserRankInfoOrderByPowerV2(g_DBUser, serverId, 10, 1)
-	rankData.RankDaoShi = dbGetUserRankInfoOrderByPowerV2(g_DBUser, serverId, 10, 2)
+	rankData.RankLevel = dbGetUserRankInfoOrderByLevelV2(g_DBUser, 10, -1)
+	rankData.RankZhanShi = dbGetUserRankInfoOrderByPowerV2(g_DBUser, 10, 0)
+	rankData.RankFaShi = dbGetUserRankInfoOrderByPowerV2(g_DBUser, 10, 1)
+	rankData.RankDaoShi = dbGetUserRankInfoOrderByPowerV2(g_DBUser, 10, 2)
 
 	jsBytes, err := json.Marshal(&rankData)
 	if err != nil {

@@ -139,7 +139,7 @@ func initDatabaseUserV2(path string) *sql.DB {
 
 	//	check role_name
 	sqlexpr = `
-		CREATE TABLE IF NOT EXISTS online_player (id integer primary key, uid integer, server_id integer)
+		CREATE TABLE IF NOT EXISTS online_player (id integer primary key, uid integer, server_id integer, lid integer)
 	`
 	_, err = db.Exec(sqlexpr)
 	if err != nil {
@@ -292,9 +292,9 @@ func dbGetUserAccountInfoByName(db *sql.DB, name string, info *ExportUserAccount
 	return row.Scan(&info.Uid, &info.Account, &info.Password, &info.Mail)
 }
 
-func dbIsUserRankExistsV2(db *sql.DB, serverId int, name string) bool {
-	rows, err := db.Query("SELECT COUNT(*) AS CNT FROM player_rank WHERE name = ? AND server_id = ?",
-		name, serverId)
+func dbIsUserRankExistsV2(db *sql.DB, name string) bool {
+	rows, err := db.Query("SELECT COUNT(*) AS CNT FROM player_rank WHERE name = ?",
+		name)
 	if err != nil {
 		seelog.Errorf("Error on selecting uid,error[%s]", err.Error())
 		return true
@@ -313,13 +313,13 @@ func dbIsUserRankExistsV2(db *sql.DB, serverId int, name string) bool {
 	return false
 }
 
-func dbRemoveUserRankInfoV2(db *sql.DB, serverId int, name string) bool {
-	if !dbIsUserRankExistsV2(db, serverId, name) {
+func dbRemoveUserRankInfoV2(db *sql.DB, name string) bool {
+	if !dbIsUserRankExistsV2(db, name) {
 		return true
 	}
 
-	_, err := db.Exec("DELETE FROM player_rank WHERE name = ? AND server_id = ?",
-		name, serverId)
+	_, err := db.Exec("DELETE FROM player_rank WHERE name = ?",
+		name)
 	if err != nil {
 		seelog.Errorf("Error on executing expression Error[%s]",
 			err.Error())
@@ -334,10 +334,10 @@ func dbUpdateUserRankInfoV2(db *sql.DB, info *UserRankInfo) bool {
 		return false
 	}
 
-	if !dbIsUserRankExistsV2(db, info.ServerId, info.Name) {
+	if !dbIsUserRankExistsV2(db, info.Name) {
 		//	new record
-		_, err := db.Exec("INSERT INTO player_rank VALUES(null, ?, ?, ?, ?, ?, ?, ?)",
-			info.Uid, info.ServerId, info.Name, info.Job, info.Level, info.Expr, info.Power)
+		_, err := db.Exec("INSERT INTO player_rank VALUES(null, ?, ?, ?, ?, ?, ?)",
+			info.Uid, info.Name, info.Job, info.Level, info.Expr, info.Power)
 		if err != nil {
 			seelog.Error("db exec failed.", " err:", err)
 			return false
@@ -370,7 +370,7 @@ func dbUpdateUserRankInfoV2(db *sql.DB, info *UserRankInfo) bool {
 			}
 			expr += " power = " + strconv.Itoa(info.Power)
 		}
-		expr += " WHERE name='" + info.Name + "'" + " AND server_id = " + strconv.Itoa(info.ServerId)
+		expr += " WHERE name='" + info.Name + "'"
 
 		_, err := db.Exec(expr)
 		if err != nil {
@@ -383,13 +383,13 @@ func dbUpdateUserRankInfoV2(db *sql.DB, info *UserRankInfo) bool {
 	}
 }
 
-func dbGetUserRankInfoOrderByPowerV2(db *sql.DB, serverId int, limit int, job int) []UserRankInfo {
+func dbGetUserRankInfoOrderByPowerV2(db *sql.DB, limit int, job int) []UserRankInfo {
 	var ret []UserRankInfo = nil
 
 	expr := "SELECT uid, name, job, level, expr, power FROM player_rank "
 	if job >= 0 &&
 		job <= 2 {
-		expr += " WHERE job = " + strconv.Itoa(job) + " AND server_id = " + strconv.Itoa(serverId)
+		expr += " WHERE job = " + strconv.Itoa(job)
 	}
 
 	expr += " ORDER BY power DESC, level DESC LIMIT " + strconv.Itoa(limit)
@@ -420,13 +420,13 @@ func dbGetUserRankInfoOrderByPowerV2(db *sql.DB, serverId int, limit int, job in
 	return ret[0:index]
 }
 
-func dbGetUserRankInfoOrderByLevelV2(db *sql.DB, serverId int, limit int, job int) []UserRankInfo {
+func dbGetUserRankInfoOrderByLevelV2(db *sql.DB, limit int, job int) []UserRankInfo {
 	var ret []UserRankInfo = nil
 
 	expr := "SELECT uid, name, job, level, expr, power FROM player_rank "
 	if job >= 0 &&
 		job <= 2 {
-		expr += " WHERE job = " + strconv.Itoa(job) + " AND server_id = " + strconv.Itoa(serverId)
+		expr += " WHERE job = " + strconv.Itoa(job)
 	}
 
 	expr += " ORDER BY level DESC, power DESC LIMIT " + strconv.Itoa(limit)
@@ -467,13 +467,13 @@ func dbRemoveOnlinePlayerByServerId(db *sql.DB, serverId int) error {
 	return err
 }
 
-func dbRemoveOnlinePlayerByUID(db *sql.DB, uid uint32) error {
-	_, err := db.Exec("DELETE FROM online_player WHERE uid = ?", uid)
+func dbRemoveOnlinePlayerByUID(db *sql.DB, uid uint32, serverId int, lid int32) error {
+	_, err := db.Exec("DELETE FROM online_player WHERE uid = ? AND server_id = ? AND lid = ?", uid, serverId, lid)
 	return err
 }
 
-func dbAddOnlinePlayer(db *sql.DB, uid uint32, serverId int) error {
-	_, err := db.Exec("INSERT INTO online_player values (null, ?, ?)", uid, serverId)
+func dbAddOnlinePlayer(db *sql.DB, uid uint32, serverId int, lid int32) error {
+	_, err := db.Exec("INSERT INTO online_player values (null, ?, ?, ?)", uid, serverId, lid)
 	return err
 }
 
