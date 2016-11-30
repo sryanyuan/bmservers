@@ -1,0 +1,31 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch_bmloginsvrapp",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "remotePath": "",
+            "port": 2345,
+            "host": "127.0.0.1",
+            "program": "${workspaceRoot}/bmloginsvrapp/bmloginsvrapp",
+            "env": {
+                "GOPATH": "${workspaceRoot}/../../../../"
+            },
+            "args": [
+                "-http-addr",
+                ":8000",
+                "-http-rpc-addr",
+                ":8001",
+                "-http-web-addr",
+                ":8002",
+                "-tcp-client-addr",
+                ":8003",
+                "-tcp-gs-addr",
+                ":8004"
+            ],
+            "showLog": true
+        }
+    ]
+}

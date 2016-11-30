@@ -16,7 +16,7 @@
             "taskName": "vscgo_build",
             "isBuildCommand": true,
             "args": [
-                "${workspaceRoot}",
+                "${workspaceRoot}/../../../../",
                 "${fileDirname}"
             ],
             "isWatching": false,
@@ -37,7 +37,7 @@
         {
             "taskName": "vscgo_install",
             "args": [
-                "${workspaceRoot}",
+                "${workspaceRoot}/../../../../",
                 "${fileDirname}"
             ],
             "isWatching": false,
